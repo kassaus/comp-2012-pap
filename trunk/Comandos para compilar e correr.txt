@@ -1,8 +1,15 @@
-compilar
+Em linux
+
+para compilar
 bison -d MiniLisp.y -o MiniLisp.tab.c 
 flex MiniLisp.l 
 gcc Minilisp.tab.c lex.yy.c -Wall -o MiniLisp
 
+no meu dá para fazer make pois já alterei as operações de Windows para Linux
+
+
 
 para correr 
 ./MiniLisp inFile.txt
+
+

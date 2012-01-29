@@ -152,9 +152,6 @@ int yyerror( char *s )
 %%
 
 
-/* início do nosso*/
-
-
 
 input:	/* vazio */
 |	input linha

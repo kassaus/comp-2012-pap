@@ -1,10 +1,8 @@
 %{
 #include <stdio.h>
-#include <string.h> /* Compara√ß√£o de Strings */
+#include <string.h>
 #include <time.h>
 #include <sys/time.h>
-
-
 
 
 /* A funcao yyparse() gerada pelo bison vai automaticamente chamar a funcao
@@ -24,28 +22,38 @@ extern int yylex( void );
 extern FILE *yyin;
 
 
-/* Defini√ß√£o da estrutura de variaveis */
 
+/* union para guardarmos o valor das variaveis; podem ser double ou boolean */
 typedef union {
 		double real;
-		char	boolean[3+1];
-	 	} valores;
+		char boolean[3+1];	/* t ou nil*/
+	 	} valor;
 
-
+/* estrutura para guardarmos as variaveis; tÍm nome, tipo e valor */
 typedef struct {
 	char nome[32+1];
-	int TipoValor; /* se For 0 ent√£o √© double se 1 ent√£o √© boolean */
-	valores valor;
-} var;
+	int tipo; 		/* convenÁao: 0 para real, 1 para boolean */
+	valor valor;
+} variavel;
 
-var vars[100];
 
+/* array das vari·veis globais*/
+variavel vars[100];
+
+
+/* array para vari·veis tempor·rias... n„o sei se ser· a melhor opÁ„o TODO*/
+variavel vars_tmp[100];
+
+
+/* contadores para sabermos onde estamos no array, como n„o h· o conceito de apagar, vai funcionar*/
 int vars_preenchidas = 0;
+int vars_tmp_preenchidas = 0;
+
 
 int le_var( const char *nome );
-int escreve_var( var v );
+int escreve_var( variavel v );
 int encontra_var( const char *nome, int adicionar );
-int Carregar_DateTime();
+int inicializa_variaveis_iniciais();
 
 
 
@@ -73,34 +81,63 @@ int yyerror( char *s )
    inteiros para cada um. Temos no entanto que os definir como "%token" no
    ficheiro ".y" do bison:
 */
-%token <inteiro> NUMERO_INT
-%token <real>    NUMERO_DBL
+
+
+%token <inteiro> NUM_INT
+%token <real>    NUM_DOUBLE
+%token <string>  STRING
+%token <string>  VARIAVEL
+
+
+%token CONCAT
+
+%token AND
+%token OR
+%token NOT
+
+%token IF
+%token COND
+%token WHEN
+%token UNLESS
+
+
+%token ZEROP
+
+%token SETQ
+%token LET
+
+%token NIL
+%token T
+
+
+
+
 %token OP_SOMA
 %token OP_SUB
 %token OP_MULT
 %token OP_DIV
-%token EQUAL
-%token MENOR
-%token MAIOR
-%token MENOR_EQUAL
-%token MAIOR_EQUAL
-%token CAT
-%token <string>  STRING
-%token <string>  VARIAVEL
-%token IF
-%token LEFT_PAR
-%token RIGHT_PAR
-%token EOL
-%token ZEROP
-%token AND
-%token OR
-%token NOT
-%token WHEN
-%token UNLESS
-%token SETQ
-%token LET
-%token NIL
-%token T
+
+%token OP_IGUAL
+%token OP_DIFERENTE	/*ainda n„o feito, fazer TODO*/
+%token OP_MENOR_IGUAL
+%token OP_MAIOR_IGUAL
+%token OP_MENOR
+%token OP_MAIOR
+
+
+%token LPAR
+%token RPAR
+
+
+
+
+
+
+
+
+
+
+
 %type <inteiro>  expr_num_int
 %type <inteiro>  listaSoma_int
 %type <inteiro>  listaSub_int
@@ -123,32 +160,12 @@ int yyerror( char *s )
 %%
 
 
-/* in√≠cio do nosso*/
-
-input:	/* vazio */	;
-input:	input comando	;
-
-comando:	
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 input:	/* vazio */
 |	input linha
 ;
 
-linha:  	EOL							/* ignorar linhas vazias (e \n do par \r\n) */
-|	expr_num_int							{ printf("%d\n", $1 ); }
+linha:  	expr_num_int							{ printf("%d\n", $1 ); }
 |	expr_num_dbl							{ printf("%f\n", $1 ); }
 |	expr_cond_int							{ printf("%d\n", $1 ); }
 |	expr_cond_dbl							{ printf("%f\n", $1 ); }
@@ -156,35 +173,35 @@ linha:  	EOL							/* ignorar linhas vazias (e \n do par \r\n) */
 |	expr_str							{ printf("%s\n", $1 ); }
 ;
 
-expr_cond_int: LEFT_PAR IF condition action_int action_int RIGHT_PAR { if($3 == 1) $$ = $4; else $$ = $5; }
+expr_cond_int: LPAR IF condition action_int action_int RPAR { if($3 == 1) $$ = $4; else $$ = $5; }
 ;
 
-expr_cond_dbl: LEFT_PAR IF condition action_dbl action_dbl RIGHT_PAR { if($3 == 1) $$ = $4; else $$ = $5; }
+expr_cond_dbl: LPAR IF condition action_dbl action_dbl RPAR { if($3 == 1) $$ = $4; else $$ = $5; }
 ;
 
-condition:	LEFT_PAR EQUAL 		  expr_num_int expr_num_int RIGHT_PAR	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MENOR 		  expr_num_int expr_num_int RIGHT_PAR	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MAIOR 		  expr_num_int expr_num_int RIGHT_PAR	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MENOR_EQUAL 	  expr_num_int expr_num_int RIGHT_PAR	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MAIOR_EQUAL 	  expr_num_int expr_num_int RIGHT_PAR	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR EQUAL		  expr_num_dbl expr_num_dbl RIGHT_PAR 	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MENOR		  expr_num_dbl expr_num_dbl RIGHT_PAR 	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MAIOR	 	  expr_num_dbl expr_num_dbl RIGHT_PAR 	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MENOR_EQUAL	  expr_num_dbl expr_num_dbl RIGHT_PAR 	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MAIOR_EQUAL	  expr_num_dbl expr_num_dbl RIGHT_PAR 	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-/* Compara√ß√£o de Strings */
-|		LEFT_PAR EQUAL	          STRING   STRING   RIGHT_PAR { if(strcmp($3, $4) == 0) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MENOR		  STRING   STRING   RIGHT_PAR { if(strcmp($3, $4) < 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MAIOR		  STRING   STRING   RIGHT_PAR { if(strcmp($3, $4) > 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MENOR_EQUAL	  STRING   STRING   RIGHT_PAR { if(strcmp($3, $4) <= 0) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LEFT_PAR MAIOR_EQUAL	  STRING   STRING   RIGHT_PAR { if(strcmp($3, $4) >= 0) strcpy($$,"t"); else strcpy($$,"nil"); }
-/* Compara√ß√£o Boolean */
+condition:	LPAR OP_IGUAL 		  expr_num_int expr_num_int RPAR	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR		  expr_num_int expr_num_int RPAR	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR		  expr_num_int expr_num_int RPAR	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR_IGUAL 	  expr_num_int expr_num_int RPAR	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MAIOR_IGUAL 	  expr_num_int expr_num_int RPAR	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_IGUAL		  expr_num_dbl expr_num_dbl RPAR 	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR MENOR		  expr_num_dbl expr_num_dbl RPAR 	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR MAIOR	 	  expr_num_dbl expr_num_dbl RPAR 	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR_IGUAL	  expr_num_dbl expr_num_dbl RPAR 	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MAIOR_IGUAL	  expr_num_dbl expr_num_dbl RPAR 	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+/* ComparaÁ„o de Strings */
+|		LPAR OP_IGUAL	          STRING   STRING   RPAR { if(strcmp($3, $4) == 0) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR MENOR		  STRING   STRING   RPAR { if(strcmp($3, $4) < 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR MAIOR		  STRING   STRING   RPAR { if(strcmp($3, $4) > 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR_IGUAL	  STRING   STRING   RPAR { if(strcmp($3, $4) <= 0) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MAIOR_IGUAL	  STRING   STRING   RPAR { if(strcmp($3, $4) >= 0) strcpy($$,"t"); else strcpy($$,"nil"); }
+/* ComparaÁ„o Boolean */
 		
 ;
 
 
-expr_zerop:	LEFT_PAR ZEROP expr_num_int RIGHT_PAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
-|		LEFT_PAR ZEROP expr_num_dbl RIGHT_PAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
+expr_zerop:	LPAR ZEROP expr_num_int RPAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
+|		LPAR ZEROP expr_num_dbl RPAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
 ;
 
 action_int:	expr_num_int		{ $$ = $1; }
@@ -195,21 +212,21 @@ action_dbl: 	expr_num_dbl		{ $$ = $1; }
 |		expr_cond_dbl		{ $$ = $1; }
 ;
 
-expr_num_int:	NUMERO_INT		{ $$ = $1; }
-|		LEFT_PAR	OP_SOMA 	listaSoma_int 	RIGHT_PAR	{ $$ = $3; }
-|		LEFT_PAR 	OP_SUB 		listaSub_int 	RIGHT_PAR 	{ $$ = $3; }
-|		LEFT_PAR	OP_MULT		listaMult_int 	RIGHT_PAR 	{ $$ = $3; }
-|		LEFT_PAR 	OP_DIV		listaDiv_int 	RIGHT_PAR	{ $$ = $3; }
+expr_num_int:	NUM_INT		{ $$ = $1; }
+|		LPAR	OP_SOMA 	listaSoma_int 	RPAR	{ $$ = $3; }
+|		LPAR 	OP_SUB 		listaSub_int 	RPAR 	{ $$ = $3; }
+|		LPAR	OP_MULT		listaMult_int 	RPAR 	{ $$ = $3; }
+|		LPAR 	OP_DIV		listaDiv_int 	RPAR	{ $$ = $3; }
 ;
 
-expr_num_dbl:	NUMERO_DBL	{ $$ = $1; }
-|		LEFT_PAR	OP_SOMA 	listaSoma_dbl 	RIGHT_PAR	{ $$ = $3; }
-|		LEFT_PAR 	OP_SUB 		listaSub_dbl 	RIGHT_PAR 	{ $$ = $3; }
-|		LEFT_PAR	OP_MULT 	listaMult_dbl 	RIGHT_PAR 	{ $$ = $3; }
-|		LEFT_PAR 	OP_DIV		listaDiv_dbl 	RIGHT_PAR	{ $$ = $3; }
+expr_num_dbl:	NUM_DOUBLE	{ $$ = $1; }
+|		LPAR	OP_SOMA 	listaSoma_dbl 	RPAR	{ $$ = $3; }
+|		LPAR 	OP_SUB 		listaSub_dbl 	RPAR 	{ $$ = $3; }
+|		LPAR	OP_MULT 	listaMult_dbl 	RPAR 	{ $$ = $3; }
+|		LPAR 	OP_DIV		listaDiv_dbl 	RPAR	{ $$ = $3; }
 ;
 
-expr_str: 	LEFT_PAR		CAT		listaString 	RIGHT_PAR	{ strcpy($$, $3); }
+expr_str: 	LPAR		CONCAT		listaString 	RPAR	{ strcpy($$, $3); }
 ;
 
 listaSoma_int: 		expr_num_int	{ $$ = $1; }
@@ -255,7 +272,7 @@ listaString: 	STRING				{ strcpy($$, $1);}
 
 int main( int argc, char *argv[] )
 {
-	if(Carregar_DateTime()==1){
+	if(inicializa_variaveis_iniciais()==1){
 		if (argc == 2)
 		{
 			yyin = fopen(argv[1], "r");
@@ -269,7 +286,7 @@ int main( int argc, char *argv[] )
 		int index = le_var("hour");
 		if (index >= 0)
 		{
-		   if(vars[index].TipoValor == 0){
+		   if(vars[index].tipo == 0){
 				printf("Variavel %s com o valor = %f",vars[index].nome,vars[index].valor.real);
 		   }
 		    else 
@@ -303,7 +320,7 @@ int le_var( const char *nome )
 
 
 
-int escreve_var(var v )
+int escreve_var(variavel v )
 {
 	int i;
 
@@ -313,13 +330,13 @@ int escreve_var(var v )
 		fprintf( stderr, "Nao foi possivel criar a variavel: %s\n", v.nome );
 		exit( 1 );
 		}
-	if(v.TipoValor==0){
+	if(v.tipo==0){
 		vars[i].valor.real = v.valor.real;
-		vars[i].TipoValor = v.TipoValor;
+		vars[i].tipo = v.tipo;
 		return 1;
 	} else {
 		strcpy(vars[i].valor.boolean,v.valor.boolean);
-		vars[i].TipoValor = v.TipoValor;
+		vars[i].tipo = v.tipo;
 		return 1;
 	}
 	return -1;
@@ -345,7 +362,7 @@ int encontra_var( const char *nome, int adicionar  )
 }
 
 
-int Carregar_DateTime()
+int inicializa_variaveis_iniciais()
 {
 
 	time_t now;
@@ -354,36 +371,36 @@ int Carregar_DateTime()
     	tm = localtime(&now);	
 	int hour = tm->tm_hour;
 	//printf("hora: %d \n", hour);
-	var Hora, Minutos, Segundos, Dia, Mes, Ano;
+	variavel Hora, Minutos, Segundos, Dia, Mes, Ano;
 
 	// Hora
 	strcpy (Hora.nome,"hour");
-	Hora.TipoValor= 0;
+	Hora.tipo= 0;
 	Hora.valor.real = tm->tm_hour; 
 
 	//Minutos
 	strcpy (Minutos.nome,"minute");
-        Minutos.TipoValor= 0;
+        Minutos.tipo= 0;
         Minutos.valor.real = tm->tm_min;	
 	
 	//Segundos
 	strcpy (Segundos.nome,"second");
-        Segundos.TipoValor= 0;
+        Segundos.tipo= 0;
         Segundos.valor.real = tm->tm_sec;
 	
 	//Dia
 	strcpy (Dia.nome,"day");
-        Dia.TipoValor= 0;
+        Dia.tipo= 0;
         Dia.valor.real = tm->tm_mday;	
 	
 	//Mes
 	strcpy (Mes.nome,"month");
-        Mes.TipoValor= 0;
+        Mes.tipo= 0;
         Mes.valor.real = tm->tm_mon;
 	
 	//Ano
 	strcpy (Ano.nome,"year");
-        Ano.TipoValor= 0;
+        Ano.tipo= 0;
         Ano.valor.real = tm->tm_year;
 
 	if(escreve_var(Hora) 	 != 1) return -1;

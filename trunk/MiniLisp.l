@@ -34,7 +34,7 @@
 <LISP>(?i:not)          { return NOT;       }
 
 <LISP>(?i:if)         	{ return IF;        }
-<LISP>(?i:cond)			{ return COND)		} /*FAZER DEPOIS SE POSSÍVEL*/
+<LISP>(?i:cond)			{ return COND;		} /*FAZER DEPOIS SE POSSÍVEL*/
 <LISP>(?i:when)         { return WHEN;     	}
 <LISP>(?i:unless)       { return UNLESS;   	}
 
@@ -46,23 +46,26 @@
 <LISP>(?i:nil)			{ return NIL;		}
 <LISP>(?i:t)			{ return T;			}
 
-
+/* poderíamos não fazer a distinçao aqui, mas dá-nos mais jeito enviar ao bison logo os tokens separados*/
 <LISP>"-"               { return OP_SUB;    }
 <LISP>"+"               { return OP_SOMA;   }
 <LISP>"*"				{ return OP_MULT;   }
 <LISP>"/"				{ return OP_DIV;    }
-<LISP>"="				{ return OP_IGUAL;  }
 
+<LISP>"="				{ return OP_IGUAL;  	}
+<LISP>"/="				{ return OP_DIFERENTE;	}
 <LISP>"<="            	{ return OP_MENOR_IGUAL;}
 <LISP>">="            	{ return OP_MAIOR_IGUAL;}
 <LISP>"<"             	{ return OP_MENOR;    	}
 <LISP>">"             	{ return OP_MAIOR;    	}
-<LISP>"("               { return LP; 			}
-<LISP>")"               { return RP; 			}
 
 
-<LISP>[+-]?[0-9]+ 									{ yylval.integer = atoi(yytext); 	return NUMERO_INT;   	}
-<LISP>[+-]?[0-9]+([.,][0-9]+)?([Ee][+-]?[0-9]+)? 	{ yylval.double = atoi(yytext); 	return NUMERO_DOUBLE;   }
+<LISP>"("               { return LPAR; 			}
+<LISP>")"               { return RPAR; 			}
+
+
+<LISP>[+-]?[0-9]+ 									{ yylval.integer = atoi(yytext); 	return NUM_INT;   	}
+<LISP>[+-]?[0-9]+([.,][0-9]+)?([Ee][+-]?[0-9]+)? 	{ yylval.double = atoi(yytext); 	return NUM_DOUBLE;   }
 
 <LISP>([[:alpha:]]|_)([[:alnum:]]|_)*{0,31}			{ int i; for (i=0;i<strlen(yytext); strcpy(yylval.string, yytext); return VARIAVEL; }
 /* a variável pode começar por letra ou underscore, e depois ter qualquer letra, número ou underscore, até 32 caracteres (31 repetições máximo depois da primeira letra)*/
