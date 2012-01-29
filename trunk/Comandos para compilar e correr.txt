@@ -1,0 +1,8 @@
+compilar
+bison -d MiniLisp.y -o MiniLisp.tab.c 
+flex MiniLisp.l 
+gcc Minilisp.tab.c lex.yy.c -Wall -o MiniLisp
+
+
+para correr 
+./MiniLisp inFile.txt
