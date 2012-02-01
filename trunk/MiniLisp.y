@@ -3,6 +3,7 @@
 #include <stdlib.h>	
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 #define NUM_VARGLOB_MAX 100 	/* 100 variáveis globais possíveis */
 #define NUM_VARTEMP_MAX 100 	/* 100 variáveis temporárias possíveis, para o LET */
@@ -159,15 +160,15 @@ linha:  	expressaoInteiros							{ printf("%d\n", $1 ); }
 
 ;
 
-exprCondicionalInteiros: LPAR IF condicao thenElseInteiros thenElseInteiros RPAR { if($3 == 1) $$ = $4; else $$ = $5; }
+exprCondicionalInteiros: LPAR IF condicao thenElseInteiros thenElseInteiros RPAR { if(strcmp($3, "t") == 0) $$ = $4; else $$ = $5; }
 ;
 
-exprCondicionalReais: LPAR IF condicao thenElseReais thenElseReais RPAR { if($3 == 1) $$ = $4; else $$ = $5; }
+exprCondicionalReais: LPAR IF condicao thenElseReais thenElseReais RPAR { if(strcmp($3, "t") == 0) $$ = $4; else $$ = $5; }
 ;
 
 condicao:	LPAR OP_IGUAL 		  expressaoInteiros expressaoInteiros RPAR	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_MENOR		  expressaoInteiros expressaoInteiros RPAR	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR		  expressaoInteiros expressaoInteiros RPAR	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MAIOR		  expressaoInteiros expressaoInteiros RPAR	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_MENOR_IGUAL 	  expressaoInteiros expressaoInteiros RPAR	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_MAIOR_IGUAL 	  expressaoInteiros expressaoInteiros RPAR	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_IGUAL		  expressaoReais expressaoReais RPAR 	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
@@ -258,7 +259,7 @@ listaString: 	STRING				{ strcpy($$, $1);}
 
 int main( int argc, char *argv[] )
 {
-//	if(inicializa_variaveis_iniciais()==1){
+	if(inicializa_variaveis_iniciais()==1){
 		if (argc == 2)
 		{
 			yyin = fopen(argv[1], "r");
@@ -281,14 +282,14 @@ int main( int argc, char *argv[] )
 		    }	
 		}
 
-/*	} 
+	} 
 	else 
 	{
 		printf("TEste Falhado\n");
 		
 	}
 
-*/
+
 
 	return 0;
 }
@@ -351,7 +352,7 @@ int encontra_var( const char *nome, int adicionar  )
 }
 
 
-/*
+
 
   int inicializa_variaveis_iniciais()
   {
@@ -361,8 +362,12 @@ int encontra_var( const char *nome, int adicionar  )
     	  now = time(0);
     	  tm = localtime(&now);	
 	  int hour = tm->tm_hour;
-	 printf("hora: %d \n", hour);
-	  variavel Hora, Minutos, Segundos, Dia, Mes, Ano;
+	  
+	  printf("hora: %d \n", hour);
+	  
+/*	  
+	 
+	 // variavel Hora, Minutos, Segundos, Dia, Mes, Ano;
 
 	//Hora
 	  strcpy (Hora.nome,"hour");
@@ -400,9 +405,13 @@ int encontra_var( const char *nome, int adicionar  )
  if(escreve_var(Dia) 	 != 1) return -1;
  if(escreve_var(Mes) 	 != 1) return -1;
  if(escreve_var(Ano) 	 != 1) return -1;
+ 
+ 
+*/
 
  return 1;
+ 
+ 
 }
 
 
-*/
