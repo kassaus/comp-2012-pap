@@ -8,6 +8,8 @@
 #define NUM_VARTEMP_MAX 100 	/* 100 variáveis temporárias possíveis, para o LET */
 
 extern int yylex( void );
+
+
 extern FILE *yyin;
 
 
@@ -43,32 +45,6 @@ int encontra_var( const char *nome, int adicionar );
 int inicializa_variaveis_iniciais();
 
 
-/* novas funcoes */
-
-
-
-/*	EscreveVariavel
-
-recebe 
-se é global ou temporária	global=1, temporária =0
-nome
-tipo
-
-
-retorna
-	-1 se a variável já existe
-	-2 se a variável não pode ser gravada
-
-*/
-
-
-int putVar(char * varname);
-void setVarValue(char * varname, float value);
-int getVar(char * varname);
-double getVarValue(int idx);
-
-
-
 
 /* Finalmente, se o bison receber alguma combinacao de tokens para a qual nao
    ha' nenhuma regra, chama uma funcao yyerror() que devemos criar.
@@ -84,11 +60,14 @@ int yyerror( char *s )
 
 %}
 
+
+
+
 %union{
-			int inteiro;
-			double real;
-			char nome[32+1];
-			char string[512];
+	int inteiro;
+	double real;
+	char nome[32+1];
+	char string[512];
 }
 
 /* Os tokens sao uma enumeracao (enum do C) que cria automaticamente valores
@@ -136,9 +115,6 @@ int yyerror( char *s )
 
 %token LPAR
 %token RPAR
-
-
-
 
 
 %type <inteiro>  expressaoInteiros
@@ -282,7 +258,7 @@ listaString: 	STRING				{ strcpy($$, $1);}
 
 int main( int argc, char *argv[] )
 {
-	if(inicializa_variaveis_iniciais()==1){
+//	if(inicializa_variaveis_iniciais()==1){
 		if (argc == 2)
 		{
 			yyin = fopen(argv[1], "r");
@@ -305,12 +281,15 @@ int main( int argc, char *argv[] )
 		    }	
 		}
 
-	} 
+/*	} 
 	else 
 	{
 		printf("TEste Falhado\n");
 		
 	}
+
+*/
+
 	return 0;
 }
 

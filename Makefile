@@ -1,13 +1,13 @@
 # Makefile para Windows com GCC
 
-calc : calc.tab.c calc.tab.h lex.yy.c Makefile
-	gcc calc.tab.c lex.yy.c -Wall -o calc
+MiniLisp : MiniLisp.tab.c MiniLisp.tab.h lex.yy.c Makefile
+	gcc MiniLisp.tab.c lex.yy.c -Wall -o MiniLisp
 
-calc.tab.c calc.tab.h : calc.y Makefile
-	bison -d calc.y -o calc.tab.c
+MiniLisp.tab.c MiniLisp.tab.h : MiniLisp.y Makefile
+	bison -d MiniLisp.y -o MiniLisp.tab.c
 
-lex.yy.c : calc.l calc.tab.h Makefile
-	flex calc.l
+lex.yy.c : MiniLisp.l MiniLisp.tab.h Makefile
+	flex MiniLisp.l
 
 clean:
-	del calc.tab.c calc.tab.h calc.output lex.yy.c calc.exe calc
+	del MiniLisp.tab.c MiniLisp.tab.h MiniLisp.output lex.yy.c MiniLisp.exe MiniLisp
