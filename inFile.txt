@@ -6,24 +6,21 @@
 
 		3 x (4 / 2) = <?ml (* 3 (/ 4 2)) ?>
 
+		(1 + 2) / 3 = <?ml (/ (+ 1 2) 3) ?>
+
 		25.849 x ( (5.0 - -9.0) / .2e3) = <?ml (* 25.849 (/ (- 5.0 -9.0) .2e3) ) ?>
 
 		1+2+3+4+5+6+7+8+9 = <?ml (+ 1 2 3 4 5 6 7 8 9) ?>
 
 		11 == <?ml ( + (* 3 4) (/ 6 2) (- (+ 1 1) 4 2) ) ?>
 
-		Concatenar "Miguel"+"."+"Serra" = <?ml (Concatenate 
-"Miguel" "." 
-"Serra") ?>
+		Concatenar "Miguel"+"."+"Serra" = <?ml (concatenate "Miguel" 
+															"." 
+															"Serra"
+															" |data: "
+															year "-" month "-" day " " hour ":" minute ":" second) ?>
 
 		Se 1 > 2 imprimes 1 senao imprimes 0 = result: <?ml ( if( > 1 2 ) (+ 0 1) (+ 0 0)) ?>
-		
-
-		Se ZEROP igual a zero devolve 't' se não nil (ZEROP (-3 2 1)) = <?ml (ZEROP (- 3 2 1)) ?>   
-		
-		Se ZEROP igual a zero devolve 't' se não nil (ZEROP (+ -3 -2 -1 +6)) = <?ml (ZEROP (+ -3 -2 -1 6)) ?>
-		
-		Se ZEROP igual a zero devolve 't' se não nil (ZEROP (+ -3 -2 -1 +6)) = <?ml (ZEROP (+ -3 -2 -1 7)) ?>
 
 		Se 2 > 1 avalia se 2.0 <= 2.0 e imprimes 1 
 		senao imprimes 0 = result: <?ml ( if( > 2 1 ) (if( <= 2.0 2.0 ) 1 0) 0 ) ?>
@@ -33,5 +30,39 @@
 		Se "abc" <= "ABC" imprime 0.0 senao 
 		avalia se 1 = 1 e 
 		imprime 1.0 senao 0.0 = result: <?ml ( if( <= "abc" "ABC" ) 0.0 ( if ( = 1 1 ) 1.0 0.0 ) ) ?>
+
+		Se 5-5=0 retorna t: <?ml (zerop (- 5 5)) ?>
+
+		Se 6 = 0 retorna nill: <?ml (zerop 6) ?>
+
+		Testar (and (or (> 2 3) (not (= 2 3) ) ) (< 2 3))_t = result: <?ml (and (or (> 2 3) (not (= 2 3) ) ) (< 2 3)) ?>
+
+		Testar (not (or (= 1 2) (= 2 3) ) )_t = result: <?ml (not (or (= 1 2) (= 2 3) ) ) ?>
+
+		Testar o OR (or (< 1 2) (= 1 2) (> 1 2) )_t = result: <?ml (or (< 1 2) (= 1 2) (> 1 2) ) ?>
+
+		Testar (and 1 2 3)_3 = result: <?ml (and 1 2 3) ?>
+
+		Testar (or 1 2 3)_1 = result: <?ml (or 1 2 3) ?>
+
+		Testar (and nil 2 3)_nil = result: <?ml (and nil 2 3) ?>
+
+		Testar (or nil nil 3)_3 = result: <?ml (or nil nil 3 ) ?>
+
+		Testar (when (< 4 5) (+ 2 2) (if (= 0 0) (/ -3.2 +9.2) 0) ) => -0.347826  result: <?ml (when (< 4 5) (+ 2 2) (if (= 0 0) (/ -3.2 +9.2) 0.0) ) ?>
+
+		Testar (unless (= 2 3) (+ 1 1) (+ 1 1) (+ 1 1) (* 5 5) ) => 25  result: <?ml (unless (= 2 3) (+ 1 1) (+ 1 1) (+ 1 1) (* 5 5) ) ?>
+
+		Testar variáveis (setq a 5) (+ a 1) result: <?ml (setq a 5) (+ a 1) ?>
+
+		Testar a variável do bloco anterior (* 5 a) => 25 result: <?ml (* 5 a) ?>
+
+		Testar se ( - ( + (* 3.0 4.0) (- (+ 1.0 1.0) 4.0 2.0) a ) a) => 8 result:  <?ml ( - ( + (* 3.0 4.0) (- (+ 1.0 1.0) 4.0 2.0) a ) a) ?>
+
+		Testar variáveis (setq c 5 b 7.3 d nil) (+ c b ) => 12.3 result: <?ml (setq c 5 b 7.3 d nil) 
+																				(+ c b ) ?>
+
+		Testar variáveis (setq variavel1A 1985 B1 11) concatenar variaveis com data - <?ml (setq variavel1A 1985 B1 11)
+																						(concatenate "data: " B1 "-" variavel1A) ?>
 	</body>
 </html>

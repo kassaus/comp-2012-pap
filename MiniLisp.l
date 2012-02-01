@@ -18,17 +18,17 @@
 
 
 <LISP>["]				BEGIN ( STRING_CONCATENATE );	/* para apanhar as aspas no concatenate*/
-<STRING_CONCATENATE>([^\\"]|\\["])*{0,512}		{ strcpy(yylval.string, yytext) ; return STRING; } 	/* limitada a 512 caracteres */
+<STRING_CONCATENATE>([^\\"]|\\([^0-7xX]|0|[0-7]{3}|[xX][0-9a-fA-F]{2}))*{0,512}		{  strcpy(yylval.string , yytext) ; return STRING; } 	/* limitada a 512 caracteres */
 <STRING_CONCATENATE>["]	BEGIN ( LISP ); 				/* quando encontrarmos o outro " voltamos ao LISP normal*/
 
 
-<LISP>concatenate  { return CONCAT;    }		/* este flex não aceita o ?i e temos de fazer todos os caracteres minusculos e maiusculos.... :-(*/
+<LISP>concatenate  { return CONCAT;    }		/* este flex não aceita o ?i e temos de fazer todos os caracteres minusculos e maiusculos.... :-(   */
 
 <LISP>and          { return AND;       }
 <LISP>or           { return OR;        }
 <LISP>not          { return NOT;       }
 
-<LISP>if       	{ return IF;        }
+<LISP>if       	{  return IF;        }
 <LISP>cond			{ return COND;		} /*FAZER DEPOIS SE POSSÍVEL*/
 <LISP>when         { return WHEN;     	}
 <LISP>unless      { return UNLESS;   	}
