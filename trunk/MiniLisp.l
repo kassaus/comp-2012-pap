@@ -1,20 +1,16 @@
-/* Compiladores Projeto Minilisp 2011/2012
-   a20090122-Paulo Fernandes  a20095167-Paulo Luis  a20091565-António Lourenço */
-
 %option noyywrap
-  #include <stdlib.h>
-  #include <string.h>
-  #include "MiniLisp.tab.h"
-  /* Nota que foi removido o #define YYSTYPE! */
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "MiniLisp.tab.h"
+%}
+
 
 %x LISP
 %x STRING_CONCATENATE
 
-
-
 %%
-
-
 
 "<?ml"                  BEGIN ( LISP );
 
@@ -67,12 +63,13 @@
 <LISP>[+-]?[0-9]+ 									{ yylval.integer = atoi(yytext); 	return NUM_INT;   	}
 <LISP>[+-]?[0-9]+([.,][0-9]+)?([Ee][+-]?[0-9]+)? 	{ yylval.double = atoi(yytext); 	return NUM_DOUBLE;   }
 
-<LISP>([[:alpha:]]|_)([[:alnum:]]|_)*{0,31}			{ int i; for (i=0;i<strlen(yytext); strcpy(yylval.string, yytext); return VARIAVEL; }
+<LISP>([[:alpha:]]|_)([[:alnum:]]|_)*{0,31}			{ int i; for (i=0;i<strlen(yytext); strcpy(yylval.nome, yytext); return VARIAVEL; }
 /* a variável pode começar por letra ou underscore, e depois ter qualquer letra, número ou underscore, até 32 caracteres (31 repetições máximo depois da primeira letra)*/
 /*VER COMO SERÁ MELHOR FAZER A VARIAVEL - A REVER*/
 
 
 /*será necessário testar isto? VERIFICAR COM TESTES*/
+/* limpar os espaços, tabs e newlines dentro do Lisp*/
 <LISP>[ \t\n\r]			;
 
 
