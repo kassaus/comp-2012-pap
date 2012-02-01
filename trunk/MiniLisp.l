@@ -6,8 +6,10 @@
 %}
 %option noyywrap
 
+
 %x LISP
 %x STRING_CONCATENATE
+
 
 %%
 
@@ -15,29 +17,29 @@
 
 
 
-<LISP>["]				BEGIN ( STRING_CONCATENATE );	/* para apanhar os " no concatenate*/
-<STRING_CONCATENATE>([^\\"]|\\([^0-7xX]|0|[0-7]{3}|[xX][0-9a-fA-F]{2}))*{0,512}	{ strcpy(yyval.string, yytext) ; return STRING; } 	/* limitada a 512 caracteres */
+<LISP>["]				BEGIN ( STRING_CONCATENATE );	/* para apanhar as aspas no concatenate*/
+<STRING_CONCATENATE>([^\\"]|\\["])*{0,512}		{ strcpy(yylval.string, yytext) ; return STRING; } 	/* limitada a 512 caracteres */
 <STRING_CONCATENATE>["]	BEGIN ( LISP ); 				/* quando encontrarmos o outro " voltamos ao LISP normal*/
 
 
-<LISP>(?i:concatenate)  { return CONCAT;    }
+<LISP>concatenate  { return CONCAT;    }		/* este flex não aceita o ?i e temos de fazer todos os caracteres minusculos e maiusculos.... :-(*/
 
-<LISP>(?i:and)          { return AND;       }
-<LISP>(?i:or)           { return OR;        }
-<LISP>(?i:not)          { return NOT;       }
+<LISP>and          { return AND;       }
+<LISP>or           { return OR;        }
+<LISP>not          { return NOT;       }
 
-<LISP>(?i:if)         	{ return IF;        }
-<LISP>(?i:cond)			{ return COND;		} /*FAZER DEPOIS SE POSSÍVEL*/
-<LISP>(?i:when)         { return WHEN;     	}
-<LISP>(?i:unless)       { return UNLESS;   	}
+<LISP>if       	{ return IF;        }
+<LISP>cond			{ return COND;		} /*FAZER DEPOIS SE POSSÍVEL*/
+<LISP>when         { return WHEN;     	}
+<LISP>unless      { return UNLESS;   	}
 
-<LISP>(?i:zerop)		{ return ZEROP;		}
+<LISP>zerop		{ return ZEROP;		}
 
-<LISP>(?i:setq)			{ return SETQ;		}
-<LISP>(?i:let)			{ return LET;		}
+<LISP>setq			{ return SETQ;		}
+<LISP>let			{ return LET;		}
 
-<LISP>(?i:nil)			{ return NIL;		}
-<LISP>(?i:t)			{ return T;			}
+<LISP>nil			{ return NIL;		}
+<LISP>t			{ return T;			}
 
 
 <LISP>"-"               { return OP_SUB;    }	/* poderíamos não fazer a distinçao aqui, mas dá-nos mais jeito enviar ao bison logo os tokens separados*/
@@ -59,7 +61,7 @@
 
 <LISP>[+-]?[0-9]+ 									{ yylval.inteiro = atoi(yytext); 	return NUM_INT;   	}
 <LISP>[+-]?[0-9]+([.,][0-9]+)?([Ee][+-]?[0-9]+)? 	{ yylval.real = atoi(yytext); 	return NUM_DOUBLE;   }
-<LISP>([[:alpha:]]|_)([[:alnum:]]|_)*{0,31}			{ int i; for (i=0;i<strlen(yytext) strcpy(yylval.nome, yytext); return VARIAVEL;  }	/* a variável pode começar por letra ou underscore, e depois ter qualquer letra, número ou underscore, até 32 caracteres (31 repetições máximo depois da primeira letra)*/ /*VER COMO SERÁ MELHOR FAZER A VARIAVEL - A REVER*/
+<LISP>([[:alpha:]]|_)([[:alnum:]]|_)*{0,31}			{ int i; for (i=0;i<strlen(yytext);i++) strcpy(yylval.nome, yytext); return VARIAVEL;  }	/* a variável pode começar por letra ou underscore, e depois ter qualquer letra, número ou underscore, até 32 caracteres (31 repetições máximo depois da primeira letra)*/ /*VER COMO SERÁ MELHOR FAZER A VARIAVEL - A REVER*/
 
 
 
