@@ -18,8 +18,8 @@ typedef struct {
 	char nome[32+1];
 	int tipo; 		/* convençao: 0 para double, 1 para boolean */
 	union {
-		char c[3+1];	/* t ou nil*/
-		double d;
+		char boolean[3+1];	/* t ou nil*/
+		double real;
 	}
 } variavel;
 
@@ -84,12 +84,12 @@ int yyerror( char *s )
 
 %}
 
-%union	{
+%union{
 			int inteiro;
 			double real;
 			char nome[32+1];
 			char string[512];
-		}
+}
 
 /* Os tokens sao uma enumeracao (enum do C) que cria automaticamente valores
    inteiros para cada um. Temos no entanto que os definir como "%token" no
@@ -179,7 +179,7 @@ linha:  	expressaoInteiros							{ printf("%d\n", $1 ); }
 |	exprCondicionalInteiros							{ printf("%d\n", $1 ); }
 |	exprCondicionalReais							{ printf("%f\n", $1 ); }
 |	expr_zerop							{ printf("%s\n", $1 ); } 
-|	expressaoString							{ printf("%s\n", $1 ); 
+|	expressaoString							{ printf("%s\n", $1 ) }; 
 
 ;
 
@@ -195,14 +195,14 @@ condicao:	LPAR OP_IGUAL 		  expressaoInteiros expressaoInteiros RPAR	{ if($3 == 
 |		LPAR OP_MENOR_IGUAL 	  expressaoInteiros expressaoInteiros RPAR	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_MAIOR_IGUAL 	  expressaoInteiros expressaoInteiros RPAR	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_IGUAL		  expressaoReais expressaoReais RPAR 	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR MENOR		  expressaoReais expressaoReais RPAR 	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR MAIOR	 	  expressaoReais expressaoReais RPAR 	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR		  expressaoReais expressaoReais RPAR 	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MAIOR	 	  expressaoReais expressaoReais RPAR 	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_MENOR_IGUAL	  expressaoReais expressaoReais RPAR 	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_MAIOR_IGUAL	  expressaoReais expressaoReais RPAR 	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
 /* Comparação de Strings */
 |		LPAR OP_IGUAL	          STRING   STRING   RPAR { if(strcmp($3, $4) == 0) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR MENOR		  STRING   STRING   RPAR { if(strcmp($3, $4) < 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR MAIOR		  STRING   STRING   RPAR { if(strcmp($3, $4) > 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR		  STRING   STRING   RPAR { if(strcmp($3, $4) < 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MAIOR		  STRING   STRING   RPAR { if(strcmp($3, $4) > 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_MENOR_IGUAL	  STRING   STRING   RPAR { if(strcmp($3, $4) <= 0) strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR OP_MAIOR_IGUAL	  STRING   STRING   RPAR { if(strcmp($3, $4) >= 0) strcpy($$,"t"); else strcpy($$,"nil"); }
 /* Comparação Boolean */
@@ -296,12 +296,12 @@ int main( int argc, char *argv[] )
 		int index = le_var("hour");
 		if (index >= 0)
 		{
-		   if(vars[index].tipo == 0){
-				printf("Variavel %s com o valor = %f",vars[index].nome,vars[index].valor.real);
+		   if(varsGlob[index].tipo == 0){
+				printf("Variavel %s com o valor = %f",varsGlob[index].nome,varsGlob[index].real);
 		   }
 		    else 
                    {
- 				printf("Variavel %s com o valor = %s",vars[index].nome,vars[index].valor.boolean);
+ 				printf("Variavel %s com o valor = %s",varsGlob[index].nome,varsGlob[index].boolean);
 		    }	
 		}
 
@@ -341,12 +341,12 @@ int escreve_var(variavel v )
 		exit( 1 );
 		}
 	if(v.tipo==0){
-		vars[i].valor.real = v.valor.real;
-		vars[i].tipo = v.tipo;
+		varsGlob[i].real = v.real;
+		varsGlob[i].tipo = v.tipo;
 		return 1;
 	} else {
-		strcpy(vars[i].valor.boolean,v.valor.boolean);
-		vars[i].tipo = v.tipo;
+		strcpy(varsGlob[i].boolean,v.boolean);
+		varsGlob[i].tipo = v.tipo;
 		return 1;
 	}
 	return -1;
@@ -357,68 +357,73 @@ int encontra_var( const char *nome, int adicionar  )
 {
 	int i;
 
-	for( i=0;  i < vars_preenchidas;  i++ )
+	for( i=0;  i < varsGlobPreenchidas;  i++ )
 		{
-		if( strcmp(vars[i].nome, nome) == 0 )
+		if( strcmp(varsGlob[i].nome, nome) == 0 )
 			return i;
 		}
 	if( adicionar  &&  i < 100 )
 		{
-		strcpy( vars[i].nome, nome );
-		vars_preenchidas++;
+		strcpy( varsGlob[i].nome, nome );
+		varsGlobPreenchidas++;
 		return i;
 		}
 	return -1;
 }
 
 
-int inicializa_variaveis_iniciais()
-{
+/*
 
-	time_t now;
-    	struct tm* tm;
-    	now = time(0);
-    	tm = localtime(&now);	
-	int hour = tm->tm_hour;
-	//printf("hora: %d \n", hour);
-	variavel Hora, Minutos, Segundos, Dia, Mes, Ano;
+  int inicializa_variaveis_iniciais()
+  {
 
-	// Hora
-	strcpy (Hora.nome,"hour");
-	Hora.tipo= 0;
-	Hora.valor.real = tm->tm_hour; 
+	  time_t now;
+    	  struct tm* tm;
+    	  now = time(0);
+    	  tm = localtime(&now);	
+	  int hour = tm->tm_hour;
+	 printf("hora: %d \n", hour);
+	  variavel Hora, Minutos, Segundos, Dia, Mes, Ano;
+
+	//Hora
+	  strcpy (Hora.nome,"hour");
+	  Hora.tipo= 0;
+	  Hora.real = tm->tm_hour; 
 
 	//Minutos
-	strcpy (Minutos.nome,"minute");
-        Minutos.tipo= 0;
-        Minutos.valor.real = tm->tm_min;	
+	  strcpy (Minutos.nome,"minute");
+          Minutos.tipo= 0;
+          Minutos.real = tm->tm_min;	
 	
 	//Segundos
-	strcpy (Segundos.nome,"second");
-        Segundos.tipo= 0;
-        Segundos.valor.real = tm->tm_sec;
+	  strcpy (Segundos.nome,"second");
+          Segundos.tipo= 0;
+          Segundos.real = tm->tm_sec;
 	
 	//Dia
-	strcpy (Dia.nome,"day");
-        Dia.tipo= 0;
-        Dia.valor.real = tm->tm_mday;	
+	  strcpy (Dia.nome,"day");
+          Dia.tipo= 0;
+          Dia.real = tm->tm_mday;	
 	
 	//Mes
-	strcpy (Mes.nome,"month");
-        Mes.tipo= 0;
-        Mes.valor.real = tm->tm_mon;
+	  strcpy (Mes.nome,"month");
+          Mes.tipo= 0;
+          Mes.real = tm->tm_mon;
 	
 	//Ano
-	strcpy (Ano.nome,"year");
-        Ano.tipo= 0;
-        Ano.valor.real = tm->tm_year;
+	 strcpy (Ano.nome,"year");
+         Ano.tipo= 0;
+         Ano.real = tm->tm_year;
 
-	if(escreve_var(Hora) 	 != 1) return -1;
-	if(escreve_var(Minutos)  != 1) return -1;
-	if(escreve_var(Segundos) != 1) return -1;
-	if(escreve_var(Dia) 	 != 1) return -1;
-	if(escreve_var(Mes) 	 != 1) return -1;
-	if(escreve_var(Ano) 	 != 1) return -1;
+ if(escreve_var(Hora) 	 != 1) return -1;
+ if(escreve_var(Minutos)  != 1) return -1;
+ if(escreve_var(Segundos) != 1) return -1;
+ if(escreve_var(Dia) 	 != 1) return -1;
+ if(escreve_var(Mes) 	 != 1) return -1;
+ if(escreve_var(Ano) 	 != 1) return -1;
 
-return 1;
+ return 1;
 }
+
+
+*/
