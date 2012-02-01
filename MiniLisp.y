@@ -1,59 +1,72 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>	
 #include <string.h>
 #include <time.h>
-#include <sys/time.h>
 
+#define NUM_VARGLOB_MAX 100 	/* 100 variáveis globais possíveis */
+#define NUM_VARTEMP_MAX 100 	/* 100 variáveis temporárias possíveis, para o LET */
 
-/* A funcao yyparse() gerada pelo bison vai automaticamente chamar a funcao
-   yylex() do flex.
-   A funcao yyparse() esta' definida no ficheiro ".tab.c" gerada por este
-   ficheiro ".y" e a yylex() no ficheiro "lex.yy.c" gerada pelo ficheiro ".l".
-
-   Como ambos os ficheiros sao compilados de forma independente para so'
-   depois serem ligados (linked), o ficheiro ".y" precisa de ter definida a
-   funcao yylex() para nao dar erro de compilacao.
-   Infelizmente precisamos que o bison corra antes do flex (para gerar o
-   ficheiro ".tab.h" com os %tokens e algumas outras definicoes). Entao
-   declaramos essafuncao do flex como sendo "definida noutro ficheiro fonte",
-   ou seja, "externa":
-*/
 extern int yylex( void );
 extern FILE *yyin;
 
 
 
-/* union para guardarmos o valor das variaveis; podem ser double ou boolean */
-typedef union {
-		double real;
-		char boolean[3+1];	/* t ou nil*/
-	 	} valor;
 
 /* estrutura para guardarmos as variaveis; têm nome, tipo e valor */
 typedef struct {
 	char nome[32+1];
-	int tipo; 		/* convençao: 0 para real, 1 para boolean */
-	valor valor;
+	int tipo; 		/* convençao: 0 para double, 1 para boolean */
+	union {
+		char c[3+1];	/* t ou nil*/
+		double d;
+	}
 } variavel;
 
 
 /* array das variáveis globais*/
-variavel vars[100];
+variavel varsGlob[NUM_VARGLOB_MAX];
 
 
 /* array para variáveis temporárias... não sei se será a melhor opção TODO*/
-variavel vars_tmp[100];
+variavel varsTemp[NUM_VARTEMP_MAX];
 
 
 /* contadores para sabermos onde estamos no array, como não há o conceito de apagar, vai funcionar*/
-int vars_preenchidas = 0;
-int vars_tmp_preenchidas = 0;
+int varsGlobPreenchidas = 0;
+int varsTempPreenchidas = 0;
 
 
 int le_var( const char *nome );
 int escreve_var( variavel v );
 int encontra_var( const char *nome, int adicionar );
 int inicializa_variaveis_iniciais();
+
+
+/* novas funcoes */
+
+
+
+/*	EscreveVariavel
+
+recebe 
+se é global ou temporária	global=1, temporária =0
+nome
+tipo
+
+
+retorna
+	-1 se a variável já existe
+	-2 se a variável não pode ser gravada
+
+*/
+
+
+int putVar(char * varname);
+void setVarValue(char * varname, float value);
+int getVar(char * varname);
+double getVarValue(int idx);
+
 
 
 
@@ -74,7 +87,8 @@ int yyerror( char *s )
 %union	{
 			int inteiro;
 			double real;
-			char string[1000+1];
+			char nome[32+1];
+			char string[512];
 		}
 
 /* Os tokens sao uma enumeracao (enum do C) que cria automaticamente valores
@@ -83,10 +97,10 @@ int yyerror( char *s )
 */
 
 
-%token <inteiro> NUM_INT
-%token <real>    NUM_DOUBLE
-%token <string>  STRING
-%token <string>  VARIAVEL
+%token <inteiro> 	NUM_INT
+%token <real>    	NUM_DOUBLE
+%token <string>		STRING
+%token <nome>		VARIAVEL
 
 
 %token CONCAT
@@ -100,7 +114,6 @@ int yyerror( char *s )
 %token WHEN
 %token UNLESS
 
-
 %token ZEROP
 
 %token SETQ
@@ -108,9 +121,6 @@ int yyerror( char *s )
 
 %token NIL
 %token T
-
-
-
 
 %token OP_SOMA
 %token OP_SUB
@@ -124,7 +134,6 @@ int yyerror( char *s )
 %token OP_MENOR
 %token OP_MAIOR
 
-
 %token LPAR
 %token RPAR
 
@@ -132,30 +141,30 @@ int yyerror( char *s )
 
 
 
+%type <inteiro>  expressaoInteiros
+%type <real> 	 expressaoReais
+%type <string> 	 expressaoString
 
-
-
-
-
-
-%type <inteiro>  expr_num_int
-%type <inteiro>  listaSoma_int
-%type <inteiro>  listaSub_int
-%type <inteiro>  listaMult_int
-%type <inteiro>  listaDiv_int
-%type <real> 	 expr_num_dbl
-%type <real> 	 listaSoma_dbl
-%type <real> 	 listaSub_dbl
-%type <real> 	 listaMult_dbl
-%type <real> 	 listaDiv_dbl
-%type <inteiro>  expr_cond_int
-%type <string>   condition
-%type <inteiro>  action_int
-%type <real> 	 expr_cond_dbl
-%type <real> 	 action_dbl
-%type <string> 	 expr_str
+%type <inteiro>  listaSomaInteiros
+%type <real> 	 listaSomaReais
+%type <inteiro>  listaSubInteiros
+%type <real> 	 listaSubReais
+%type <inteiro>  listaMultInteiros
+%type <real> 	 listaMultReais
+%type <inteiro>  listaDivInteiros
+%type <real> 	 listaDivReais
 %type <string> 	 listaString
+
+%type <inteiro>  exprCondicionalInteiros
+%type <real> 	 exprCondicionalReais
+%type <string>   condicao
+%type <inteiro>  thenElseInteiros
+%type <real> 	 thenElseReais
+
+
+/* nao sei se necessario...*/
 %type <string>   expr_zerop
+
 
 %%
 
@@ -165,30 +174,31 @@ input:	/* vazio */
 |	input linha
 ;
 
-linha:  	expr_num_int							{ printf("%d\n", $1 ); }
-|	expr_num_dbl							{ printf("%f\n", $1 ); }
-|	expr_cond_int							{ printf("%d\n", $1 ); }
-|	expr_cond_dbl							{ printf("%f\n", $1 ); }
+linha:  	expressaoInteiros							{ printf("%d\n", $1 ); }
+|	expressaoReais							{ printf("%f\n", $1 ); }
+|	exprCondicionalInteiros							{ printf("%d\n", $1 ); }
+|	exprCondicionalReais							{ printf("%f\n", $1 ); }
 |	expr_zerop							{ printf("%s\n", $1 ); } 
-|	expr_str							{ printf("%s\n", $1 ); }
+|	expressaoString							{ printf("%s\n", $1 ); 
+
 ;
 
-expr_cond_int: LPAR IF condition action_int action_int RPAR { if($3 == 1) $$ = $4; else $$ = $5; }
+exprCondicionalInteiros: LPAR IF condicao thenElseInteiros thenElseInteiros RPAR { if($3 == 1) $$ = $4; else $$ = $5; }
 ;
 
-expr_cond_dbl: LPAR IF condition action_dbl action_dbl RPAR { if($3 == 1) $$ = $4; else $$ = $5; }
+exprCondicionalReais: LPAR IF condicao thenElseReais thenElseReais RPAR { if($3 == 1) $$ = $4; else $$ = $5; }
 ;
 
-condition:	LPAR OP_IGUAL 		  expr_num_int expr_num_int RPAR	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR		  expr_num_int expr_num_int RPAR	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR		  expr_num_int expr_num_int RPAR	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR_IGUAL 	  expr_num_int expr_num_int RPAR	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MAIOR_IGUAL 	  expr_num_int expr_num_int RPAR	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_IGUAL		  expr_num_dbl expr_num_dbl RPAR 	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR MENOR		  expr_num_dbl expr_num_dbl RPAR 	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR MAIOR	 	  expr_num_dbl expr_num_dbl RPAR 	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR_IGUAL	  expr_num_dbl expr_num_dbl RPAR 	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MAIOR_IGUAL	  expr_num_dbl expr_num_dbl RPAR 	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+condicao:	LPAR OP_IGUAL 		  expressaoInteiros expressaoInteiros RPAR	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR		  expressaoInteiros expressaoInteiros RPAR	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR		  expressaoInteiros expressaoInteiros RPAR	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR_IGUAL 	  expressaoInteiros expressaoInteiros RPAR	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MAIOR_IGUAL 	  expressaoInteiros expressaoInteiros RPAR	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_IGUAL		  expressaoReais expressaoReais RPAR 	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR MENOR		  expressaoReais expressaoReais RPAR 	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR MAIOR	 	  expressaoReais expressaoReais RPAR 	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MENOR_IGUAL	  expressaoReais expressaoReais RPAR 	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
+|		LPAR OP_MAIOR_IGUAL	  expressaoReais expressaoReais RPAR 	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
 /* Comparação de Strings */
 |		LPAR OP_IGUAL	          STRING   STRING   RPAR { if(strcmp($3, $4) == 0) strcpy($$,"t"); else strcpy($$,"nil"); }
 |		LPAR MENOR		  STRING   STRING   RPAR { if(strcmp($3, $4) < 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
@@ -200,65 +210,65 @@ condition:	LPAR OP_IGUAL 		  expr_num_int expr_num_int RPAR	{ if($3 == $4) strcp
 ;
 
 
-expr_zerop:	LPAR ZEROP expr_num_int RPAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
-|		LPAR ZEROP expr_num_dbl RPAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
+expr_zerop:	LPAR ZEROP expressaoInteiros RPAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
+|		LPAR ZEROP expressaoReais RPAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
 ;
 
-action_int:	expr_num_int		{ $$ = $1; }
-|		expr_cond_int		{ $$ = $1; }
+thenElseInteiros:	expressaoInteiros		{ $$ = $1; }
+|		exprCondicionalInteiros		{ $$ = $1; }
 ;
 
-action_dbl: 	expr_num_dbl		{ $$ = $1; }
-|		expr_cond_dbl		{ $$ = $1; }
+thenElseReais: 	expressaoReais		{ $$ = $1; }
+|		exprCondicionalReais		{ $$ = $1; }
 ;
 
-expr_num_int:	NUM_INT		{ $$ = $1; }
-|		LPAR	OP_SOMA 	listaSoma_int 	RPAR	{ $$ = $3; }
-|		LPAR 	OP_SUB 		listaSub_int 	RPAR 	{ $$ = $3; }
-|		LPAR	OP_MULT		listaMult_int 	RPAR 	{ $$ = $3; }
-|		LPAR 	OP_DIV		listaDiv_int 	RPAR	{ $$ = $3; }
+expressaoInteiros:	NUM_INT		{ $$ = $1; }
+|		LPAR	OP_SOMA 	listaSomaInteiros 	RPAR	{ $$ = $3; }
+|		LPAR 	OP_SUB 		listaSubInteiros 	RPAR 	{ $$ = $3; }
+|		LPAR	OP_MULT		listaMultInteiros 	RPAR 	{ $$ = $3; }
+|		LPAR 	OP_DIV		listaDivInteiros 	RPAR	{ $$ = $3; }
 ;
 
-expr_num_dbl:	NUM_DOUBLE	{ $$ = $1; }
-|		LPAR	OP_SOMA 	listaSoma_dbl 	RPAR	{ $$ = $3; }
-|		LPAR 	OP_SUB 		listaSub_dbl 	RPAR 	{ $$ = $3; }
-|		LPAR	OP_MULT 	listaMult_dbl 	RPAR 	{ $$ = $3; }
-|		LPAR 	OP_DIV		listaDiv_dbl 	RPAR	{ $$ = $3; }
+expressaoReais:	NUM_DOUBLE	{ $$ = $1; }
+|		LPAR	OP_SOMA 	listaSomaReais 	RPAR	{ $$ = $3; }
+|		LPAR 	OP_SUB 		listaSubReais 	RPAR 	{ $$ = $3; }
+|		LPAR	OP_MULT 	listaMultReais 	RPAR 	{ $$ = $3; }
+|		LPAR 	OP_DIV		listaDivReais 	RPAR	{ $$ = $3; }
 ;
 
-expr_str: 	LPAR		CONCAT		listaString 	RPAR	{ strcpy($$, $3); }
+expressaoString: 	LPAR		CONCAT		listaString 	RPAR	{ strcpy($$, $3); }
 ;
 
-listaSoma_int: 		expr_num_int	{ $$ = $1; }
-|			listaSoma_int 	expr_num_int	{ $$ = $1 + $2; }
+listaSomaInteiros: 		expressaoInteiros	{ $$ = $1; }
+|			listaSomaInteiros 	expressaoInteiros	{ $$ = $1 + $2; }
 ;
 
-listaSoma_dbl: 		expr_num_dbl	{ $$ = $1; }
-|			listaSoma_dbl 	expr_num_dbl	{ $$ = $1 + $2; }
+listaSomaReais: 		expressaoReais	{ $$ = $1; }
+|			listaSomaReais 	expressaoReais	{ $$ = $1 + $2; }
 ;
 
-listaSub_int: 		expr_num_int	{ $$ = $1; }
-|	  		listaSub_int 	expr_num_int	{ $$ = $1 - $2; }
+listaSubInteiros: 		expressaoInteiros	{ $$ = $1; }
+|	  		listaSubInteiros 	expressaoInteiros	{ $$ = $1 - $2; }
 ;
 
-listaSub_dbl: 		expr_num_dbl	{ $$ = $1; }
-|			listaSub_dbl 	expr_num_dbl	{ $$ = $1 - $2; }
+listaSubReais: 		expressaoReais	{ $$ = $1; }
+|			listaSubReais 	expressaoReais	{ $$ = $1 - $2; }
 ;
 
-listaMult_int: 		expr_num_int	{ $$ = $1; }
-|			listaMult_int 	expr_num_int	{ $$ = $1 * $2; }
+listaMultInteiros: 		expressaoInteiros	{ $$ = $1; }
+|			listaMultInteiros 	expressaoInteiros	{ $$ = $1 * $2; }
 ;
 
-listaMult_dbl: 		expr_num_dbl	{ $$ = $1; }
-|			listaMult_dbl 	expr_num_dbl	{ $$ = $1 * $2; }
+listaMultReais: 		expressaoReais	{ $$ = $1; }
+|			listaMultReais 	expressaoReais	{ $$ = $1 * $2; }
 ;
 
-listaDiv_int: 		expr_num_int	{ $$ = $1; }
-|			listaDiv_int 	expr_num_int	{ $$ = $1 / $2; }
+listaDivInteiros: 		expressaoInteiros	{ $$ = $1; }
+|			listaDivInteiros 	expressaoInteiros	{ $$ = $1 / $2; }
 ;
 
-listaDiv_dbl: 		expr_num_dbl	{ $$ = $1; }
-|			listaDiv_dbl 	expr_num_dbl	{ $$ = $1 / $2; }
+listaDivReais: 		expressaoReais	{ $$ = $1; }
+|			listaDivReais 	expressaoReais	{ $$ = $1 / $2; }
 ;
 
 listaString: 	STRING				{ strcpy($$, $1);}
