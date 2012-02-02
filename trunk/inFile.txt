@@ -14,11 +14,7 @@
 
 		11 == <?ml ( + (* 3 4) (/ 6 2) (- (+ 1 1) 4 2) ) ?>
 
-		Concatenar "Miguel"+"."+"Serra" = <?ml (concatenate "Miguel" 
-															"." 
-															"Serra"
-															" |data: "
-															year "-" month "-" day " " hour ":" minute ":" second) ?>
+
 
 		Se 1 > 2 imprimes 1 senao imprimes 0 = result: <?ml ( if( > 1 2 ) (+ 0 1) (+ 0 0)) ?>
 
@@ -64,5 +60,15 @@
 
 		Testar variáveis (setq variavel1A 1985 B1 11) concatenar variaveis com data - <?ml (setq variavel1A 1985 B1 11)
 																						(concatenate "data: " B1 "-" variavel1A) ?>
+																						
+																		
 	</body>
+	
+	
+	
+			Concatenar "Miguel"+"."+"Serra" = <?ml (concatenate "Miguel" 
+															"." 
+															"Serra"
+															" |data: "
+															year "-" month "-" day " " hour ":" minute ":" second) ?>
 </html>
