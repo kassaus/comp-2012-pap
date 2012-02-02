@@ -113,28 +113,28 @@ expr_setq: LP SETQ expr_variavel RP 	/* não escreve nada, cria variavel*/
 
 
 expr_variavel: NOMEVAR expr_double		{ 	int i = verificaVariavel($1);
-											if(i == varsGlobaisPreenchidas) 
+											if(i == -1) 
 												adicionaVariavel($1, $2, NULL, 0); 
 											else 
 												actualizaVariavel($1, $2, NULL, 0, i); 
 										}
 
 |	expr_variavel NOMEVAR expr_double	{ 	int i = verificaVariavel($1);
-											if(i == varsGlobaisPreenchidas) 
+											if(i == -1) 
 												adicionaVariavel($2, $3, NULL, 0); 
 											else 
 												actualizaVariavel($2, $3, NULL, 0, i); 
 										}
 
 |	NOMEVAR T							{ 	int i = verificaVariavel($1);
-											if(i == varsGlobaisPreenchidas) 
+											if(i == -1) 
 												adicionaVariavel($1, 0, $2, 1); 
 											else 
 												actualizaVariavel($1, 0, $2, 1, i); 
 										}
 
 |	expr_variavel NOMEVAR T				{ 	int i = verificaVariavel($1);
-											if(i == varsGlobaisPreenchidas) 
+											if(i == -1) 
 												adicionaVariavel($2, 0, $3, 1); 
 											else 
 												actualizaVariavel($2, 0, $3, 1, i); 
@@ -143,28 +143,28 @@ expr_variavel: NOMEVAR expr_double		{ 	int i = verificaVariavel($1);
 
 
 |	NOMEVAR NIL							{ 	int i = verificaVariavel($1);
-											if(i == varsGlobaisPreenchidas) 
+											if(i == -1) 
 												adicionaVariavel($1, 0, $2, 1); 
 											else 
 												actualizaVariavel($1, 0, $2, 1, i); 
 										}
 
 |	expr_variavel NOMEVAR NIL			{ 	int i = verificaVariavel($1);
-											if(i == varsGlobaisPreenchidas) 
+											if(i == -1) 
 												adicionaVariavel($2, 0, $3, 1); 
 											else 
 												actualizaVariavel($2, 0, $3, 1, i); 
 										}
 											
 |	NOMEVAR condicao					{ 	int i = verificaVariavel($1);
-											if(i == varsGlobaisPreenchidas) 
+											if(i == -1) 
 												adicionaVariavel($1, 0, $2, 1); 
 											else 
 												actualizaVariavel($1, 0, $2, 1, i); 
 										}
 																	
 |	expr_variavel NOMEVAR condicao		{ 	int i = verificaVariavel($1);
-											if(i == varsGlobaisPreenchidas) 
+											if(i == -1) 
 												adicionaVariavel($2, 0, $3, 1); 
 											else 
 												actualizaVariavel($2, 0, $3, 1, i); 
@@ -314,7 +314,7 @@ expr_double:	NUMERO					{ $$ = $1; }
 
 |	NOMEVAR								{ 		int i = verificaVariavel($1); 
 												
-												if ( i== varsGlobaisPreenchidas ) {
+												if ( i== -1 ) {
 													printf("Variavel inexistente\n"); 
 													exit(-1);
 												}
@@ -378,7 +378,7 @@ lista_string: 	STRING				{ strcpy($$, $1);}
 
 |	NOMEVAR							{ 	int i = verificaVariavel($1);
 
-										if ( i ==varsGlobaisPreenchidas ) {		/* se a var não existe*/
+										if ( i ==-1 ) {		/* se a var não existe*/
 											printf("Variavel inexistente\n"); 
 											exit(-1);
 										}
@@ -393,7 +393,7 @@ lista_string: 	STRING				{ strcpy($$, $1);}
 								
 |	lista_string NOMEVAR			{ 	int i = verificaVariavel($2);
 
-										if ( i ==varsGlobaisPreenchidas ) {		/* se a var não existe*/
+										if ( i ==-1 ) {		/* se a var não existe*/
 											printf("Variavel inexistente\n"); 
 											exit(-1);
 										}
@@ -438,7 +438,7 @@ int verificaVariavel( const char *name ){
 		if (strncasecmp(arrayVarGlobais[i].nome, name, sizeof(name)) == 0)
 			return i;	/* se a variavel existe*/
 	}
-	return varsGlobaisPreenchidas; 	/* se ainda não existe devolve o index onde vai poder gravar */
+	return (-1); 	/* se ainda não existe */
 }
 
 
@@ -487,20 +487,23 @@ void actualizaVariavel( char nome[MAXNOME], double real, char booleano[MAXBOOL],
 
 
 void inicializaVariaveisIniciais() {
+
 	/* obtém hora do sistema*/
-	time_t sec = time(&sec);
-	struct tm t = *localtime(&sec);	
+	time_t now;
+	struct tm* tm;
+	now = time(0);
+	tm = localtime(&now);
 	
 	/* limpa a lista das variaveis globais*/
 	limpaListaVariaveis(1);
 	
 	/* adiciona as variáveis iniciais*/
-	adicionaVariavel("year", 1900 + t.tm_year, NULL, 0);
-	adicionaVariavel("month", 1 + t.tm_mon, NULL, 0);
-	adicionaVariavel("day", t.tm_mday, NULL, 0);
-	adicionaVariavel("hour", t.tm_hour, NULL, 0);
-	adicionaVariavel("minute", t.tm_min, NULL, 0);
-	adicionaVariavel("second", t.tm_sec, NULL, 0);
+	adicionaVariavel("year", 1900 + tm->tm_year, NULL, 0);
+	adicionaVariavel("month", 1 + tm->tm_mon, NULL, 0);
+	adicionaVariavel("day", tm->tm_mday, NULL, 0);
+	adicionaVariavel("hour", tm->tm_hour, NULL, 0);
+	adicionaVariavel("minute", tm->tm_min, NULL, 0);
+	adicionaVariavel("second", tm->tm_sec, NULL, 0);
 	
 	return;
 }
