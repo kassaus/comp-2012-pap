@@ -417,6 +417,10 @@ expr_setq: LP SETQ expr_variavel RP 	/* não escreve nada, cria variavel*/
 
 int main( int argc, char *argv[] )
 {
+
+	/* limpa a lista das variaveis globais*/
+	limpaListaVariaveis(1);
+	
 	inicializaVariaveisIniciais();
 	
 	if (argc == 2) {
@@ -497,8 +501,7 @@ void inicializaVariaveisIniciais() {
 	now = time(0);
 	tm = localtime(&now);
 	
-	/* limpa a lista das variaveis globais*/
-	limpaListaVariaveis(1);
+
 	
 	/* adiciona as variáveis iniciais*/
 	adicionaVariavel("year", 1900 + tm->tm_year, NULL, 0);
@@ -525,15 +528,63 @@ int verificaTipo( double num ){
 	char numString[MAXVARS]; 
 	sprintf(numString, "%f", num);
 
-	int i;
+	int i, count=0;
+	
+	
+	
+/*nova tentativa*/
+	for ( i=0; ( i<MAXVARS || numString[i]=='\0' || numString[i]=='.' )	; i++) ;
+	
+	if (numString[i]=='\0' || i==MAXVARS) 
+		return 0;		/* inteiro*/
+				
+	/* temos agora o index do i onde está o ponto*/	
+	/* procurar agora 6 zeros*/
+	
+	for ( ; i<MAXVARS; i++){
+	
+		if (count==6)
+			return 0;	/* inteiro*/
+		
+		if (numString[i]=='0') count++;
+	
+	}
+	
+	return 1;	/* real*/
+	
+
+	
+	
+	
+
+/*fim nova tentativa*/	
+	
+	/*
+	
 	for ( i=0; i<MAXVARS; i++) {
 		if (numString[i]=='\0')
-			return 0;	/* chegou ao fim da string sem encontrar '.'*/	
+			return 0;	 				//chegou ao fim da string sem encontrar '.'	
 			
-		if (numString[i]=='.')
-			return 1;	/* é um numero double */	
+		if (numString[i]=='.') {
+		
+			for (f = i+1; f < strlen(numString); f++){
+				if(count==5)
+					return 0;
+				
+				if (numString[f]=='\0')
+					break;
+					
+				if (numString[f]=='0'){
+					count++;
+				}
+				return 1;				 //é um double       ALTERAR PARA 1
+			}
+		}
 	}	
 	return 0;
+	
+*/
+
 }
 
 

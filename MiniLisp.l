@@ -38,20 +38,20 @@
 "<="				{ if (DEBUG) printf("Flex consumiu: <=");  return MENOR_IGUAL; }
 "/="				{ if (DEBUG) printf("Flex consumiu: /=");  return DIFERENTE; } 
 
-"not"				{ if (DEBUG) printf("Flex consumiu: not");  return NOT; }
-"or"				{ if (DEBUG) printf("Flex consumiu: or");  return OR; }
-"and"				{ if (DEBUG) printf("Flex consumiu: and");  return AND; }
+"not"				{ if (DEBUG) printf("Flex consumiu: not");  	return NOT; }
+"or"				{ if (DEBUG) printf("Flex consumiu: or");  		return OR; }
+"and"				{ if (DEBUG) printf("Flex consumiu: and");  	return AND; }
 
-"if"				{ if (DEBUG) printf("Flex consumiu: if");  return IF; }
-"when"				{ if (DEBUG) printf("Flex consumiu: when");   return WHEN; }
+"if"				{ if (DEBUG) printf("Flex consumiu: if");  		return IF; }
+"when"				{ if (DEBUG) printf("Flex consumiu: when");   	return WHEN; }
 "unless"			{ if (DEBUG) printf("Flex consumiu: unless");   return UNLESS; }
-"zerop"				{ if (DEBUG) printf("Flex consumiu: zerop");   return ZEROP; }
-"setq"				{ if (DEBUG) printf("Flex consumiu: setq");  return SETQ; }
+"zerop"				{ if (DEBUG) printf("Flex consumiu: zerop"); 	return ZEROP; }
+"setq"				{ if (DEBUG) printf("Flex consumiu: setq");  	return SETQ; }
 
-"let"				{ if (DEBUG) printf("Flex consumiu: let");  return LET; }
+"let"				{ if (DEBUG) printf("Flex consumiu: let");  	return LET; }
 
-"nil"				{ if (DEBUG) printf("Flex consumiu: nil");  return NIL; }
-"t"					{ if (DEBUG) printf("Flex consumiu: t");  return T; }
+"nil"				{ if (DEBUG) printf("Flex consumiu: nil");  	return NIL; }
+"t"					{ if (DEBUG) printf("Flex consumiu: t");  		return T; }
 
 "concatenate"		{ if (DEBUG) printf("Flex consumiu: concatenate");  return CONCATENATE; }
 
