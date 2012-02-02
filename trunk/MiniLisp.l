@@ -23,12 +23,12 @@ NUM		({DIGIT}+("."{DIGIT}*)?|"."{DIGIT}+)([Ee][+-][0-9]+)?
 %x LISP
 %x STR
 
-	int DEBUG = 0;
-	int STR_Caller;
+
+
 
 
 %%
-	int DEBUG = 0
+	int DEBUG = 0;
 
 	
 
@@ -85,7 +85,7 @@ NUM		({DIGIT}+("."{DIGIT}*)?|"."{DIGIT}+)([Ee][+-][0-9]+)?
 }
 
 <STR>{
-([^\\"]|\\([^0-7xX]|0|[0-7]{3}|[xX][0-9a-fA-F]{2}))*{0,512}		{  strcpy(yylval.string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.string); return STRING; } 	/* limitada a 512 caracteres */
+([^\\"]|\\([^0-7xX]|0|[0-7]{3}|[xX][0-9a-fA-F]{2}))*{0,512}		{  strcpy(yylval.valor_string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.valor_string); return STRING; } 	/* limitada a 512 caracteres */
 
 ["]					BEGIN ( LISP );
 }
