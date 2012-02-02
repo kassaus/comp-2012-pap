@@ -65,7 +65,9 @@
 ["]					BEGIN ( STR );	/* para apanhar as aspas no concatenate*/
 
 "?>"				BEGIN(INITIAL); 
-}
+
+
+}  /* fim do LISP*/
 
 <STR>{
 ([^\\"]|\\([^0-7xX]|0|[0-7]{3}|[xX][0-9a-fA-F]{2}))*{0,512}		{  strcpy(yylval.string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.string); return STRING; } 	/* limitada a 512 caracteres */

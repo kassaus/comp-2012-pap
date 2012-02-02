@@ -888,22 +888,22 @@ YY_RULE_SETUP
 #line 67 "MiniLisp.l"
 BEGIN(INITIAL); 
 	YY_BREAK
-
+/* fim do LISP*/
 
 case 32:
 YY_RULE_SETUP
-#line 71 "MiniLisp.l"
+#line 73 "MiniLisp.l"
 {  strcpy(yylval.string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.string); return STRING; } 	/* limitada a 512 caracteres */
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 73 "MiniLisp.l"
+#line 75 "MiniLisp.l"
 BEGIN ( LISP );
 	YY_BREAK
 
 case 34:
 YY_RULE_SETUP
-#line 76 "MiniLisp.l"
+#line 78 "MiniLisp.l"
 ECHO;
 	YY_BREAK
 #line 910 "lex.yy.c"
@@ -1794,4 +1794,4 @@ int main()
 	return 0;
 	}
 #endif
-#line 76 "MiniLisp.l"
+#line 78 "MiniLisp.l"
