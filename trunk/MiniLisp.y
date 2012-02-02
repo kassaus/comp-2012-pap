@@ -54,6 +54,7 @@ int yyerror( char *s )
 
 
 %token <real> NUMERO
+
 %token <string> STRING
 %token <string> NOMEVAR
 %token <string> NIL
@@ -105,8 +106,75 @@ expressao:	expr_double				{ if( verificaTipo($1) ) printf("%f ", $1 ); else prin
 
 
 
-expr_setq: LP SETQ expr_variavel RP 	/* não escreve nada, cria variavel*/
+expr_double:	NUMERO					{ $$ = $1; }
+
+|	LP NUMERO RP						{ $$ = $2; }
+
+|	NOMEVAR								{ 		int i = verificaVariavel($1); 
+												
+												if ( i== -1 ) {
+													printf("Variavel inexistente\n"); 
+													exit(-1);
+												}
+												
+												if( arrayVarGlobais[i].tipo == 0) 
+													 $$ = arrayVarGlobais[i].real; 
+												else {	
+													printf("Erro: Esperado termo numérico, recebido booleano\n");
+													exit(-1);
+												}
+										}
+											
+|	LP SOMA lista_numeros_soma  RP		{ $$ = $3; }
+
+|	LP SUB lista_numeros_sub RP 		{ $$ = $3; }
+
+|	LP MUL lista_numeros_mul RP 		{ $$ = $3; }
+
+|	LP DIV lista_numeros_div RP			{ $$ = $3; }
+
 ;
+
+
+expr_condicional:	LP IF condicao expr_then_else expr_then_else RP { if(strcmp($3, "t") == 0) {$$ = $4 ;}  else {$$ = $5;} 	}
+																	   
+| LP WHEN condicao expr_then_else RP			{ if(strcmp($3, "t") == 0) {$$ = $4 ;} else {printf("nil");} } 
+
+| LP UNLESS condicao expr_then_else RP			{ if(strcmp($3, "nil") == 0) {$$ = $4;} else {printf("nil");}  }																   
+;
+
+
+
+
+lista_numeros_soma: 	expr_double		{ $$ = $1; }
+
+|	lista_numeros_soma 	expr_double		{ $$ = $1 + $2; }
+
+;
+
+lista_numeros_sub: 		expr_double	{ $$ = $1; }
+
+|	lista_numeros_sub 	expr_double	{ $$ = $1 - $2; }
+;
+
+
+
+lista_numeros_mul: 		expr_double	{ $$ = $1; }
+
+|	lista_numeros_mul 	expr_double	{ $$ = $1 * $2; }
+;
+
+
+
+lista_numeros_div: 		expr_double	{ $$ = $1; }
+
+|	lista_numeros_div 	expr_double	{ $$ = $1 / $2; }
+;
+
+
+
+
+
 
 
 
@@ -172,25 +240,8 @@ expr_variavel: NOMEVAR expr_double		{ 	int i = verificaVariavel($1);
 ;
 
 
-/*
-expr_do: 	expr_double					{ if ( verificaTipo($1) ) sprintf($$, "%f", $1); else sprintf($$, "%d", (int)$1); }
-
-|	expr_do expr_double					{ if ( verificaTipo($2) ) sprintf($$, "%f", $2); else sprintf($$, "%d", (int)$2); }
-
-|	expr_condicional					{ if ( verificaTipo($1) ) sprintf($$, "%f", $1); else sprintf($$, "%d", (int)$1); }
-
-|	expr_do expr_condicional			{ if ( verificaTipo($2) ) sprintf($$, "%f", $2); else sprintf($$, "%d", (int)$2); }
-
-;
-*/
 
 
-expr_condicional:	LP IF condicao expr_then_else expr_then_else RP { if(strcmp($3, "t") == 0) $$ = $4; else $$ = $5; 	}
-																	   
-| LP WHEN condicao expr_then_else RP			{ if(strcmp($3, "t") == 0) {$$ = $4;} } /* TODO verificar se é necessário sprintf*/
-
-| LP UNLESS condicao expr_then_else RP			{ if(strcmp($3, "nil") == 0) {$$ = $4;} }																   
-;
 
 
 expr_condicional_booleana: LP ZEROP expr_double RP { if($3 == 0) strcpy($$, "t"); else strcpy($$, "nil"); }
@@ -310,60 +361,9 @@ expr_then_else: expr_double				{ $$ = $1; }
 
 
 
-expr_double:	NUMERO					{ $$ = $1; }
-
-|	NOMEVAR								{ 		int i = verificaVariavel($1); 
-												
-												if ( i== -1 ) {
-													printf("Variavel inexistente\n"); 
-													exit(-1);
-												}
-												
-												if( arrayVarGlobais[i].tipo == 0) 
-													 $$ = arrayVarGlobais[i].real; 
-												else {	
-													printf("Erro: Esperado termo numérico, recebido booleano\n");
-													exit(-1);
-												}
-										}
-											
-|	LP SOMA lista_numeros_soma  RP		{ $$ = $3; }
-
-|	LP SUB lista_numeros_sub RP 		{ $$ = $3; }
-
-|	LP MUL lista_numeros_mul RP 		{ $$ = $3; }
-
-|	LP DIV lista_numeros_div RP			{ $$ = $3; }
-
-;
-
-
-lista_numeros_soma: 	expr_double		{ $$ = $1; }
-
-|	lista_numeros_soma 	expr_double		{ $$ = $1 + $2; }
-
-;
 
 
 
-lista_numeros_sub: 		expr_double	{ $$ = $1; }
-
-|	lista_numeros_sub 	expr_double	{ $$ = $1 - $2; }
-;
-
-
-
-lista_numeros_mul: 		expr_double	{ $$ = $1; }
-
-|	lista_numeros_mul 	expr_double	{ $$ = $1 * $2; }
-;
-
-
-
-lista_numeros_div: 		expr_double	{ $$ = $1; }
-
-|	lista_numeros_div 	expr_double	{ $$ = $1 / $2; }
-;
 
 
 
@@ -406,6 +406,15 @@ lista_string: 	STRING				{ strcpy($$, $1);}
 									}
 									  
 ;
+
+
+
+
+
+
+expr_setq: LP SETQ expr_variavel RP 	/* não escreve nada, cria variavel*/
+;
+
 
 
 
