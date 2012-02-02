@@ -15,7 +15,7 @@
 
 
 %%
-
+	int DEBUG = 0;
 
 	
 "<?ml"				BEGIN(LISP);
@@ -58,9 +58,9 @@
 [ \t\n\r]			{ if (DEBUG) printf("Flex consumiu: espaco, tab ou newline"); }
 
 
-[+-]?[0-9]+([.,][0-9]+)?([Ee][+-]?[0-9]+)?					{ yylval.valor_double = atof(yytext);	if (DEBUG) printf("Flex consumiu: %f\n", yylval.valor_double); return NUMERO; }
+[+-]?[0-9]+([.,][0-9]+)?([Ee][+-]?[0-9]+)?					{ yylval.real = atof(yytext);	if (DEBUG) printf("Flex consumiu: %f\n", yylval.real); return NUMERO; }
 
-[a-zA-Z_]+([0-9a-zA-Z_]?)*				{ strcpy(yylval.nome_variavel, yytext);	if (DEBUG) printf("Flex consumiu: %s\n", yylval.nome_variavel); return NOMEVAR; }
+[a-zA-Z_]+([0-9a-zA-Z_]?)*				{ strcpy(yylval.string, yytext);	if (DEBUG) printf("Flex consumiu: %s\n", yylval.string ); return NOMEVAR; }
 
 ["]					BEGIN ( STR );	/* para apanhar as aspas no concatenate*/
 
@@ -68,7 +68,7 @@
 }
 
 <STR>{
-([^\\"]|\\([^0-7xX]|0|[0-7]{3}|[xX][0-9a-fA-F]{2}))*{0,512}		{  strcpy(yylval.valor_string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.valor_string); return STRING; } 	/* limitada a 512 caracteres */
+([^\\"]|\\([^0-7xX]|0|[0-7]{3}|[xX][0-9a-fA-F]{2}))*{0,512}		{  strcpy(yylval.string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.string); return STRING; } 	/* limitada a 512 caracteres */
 
 ["]					BEGIN ( LISP );
 }

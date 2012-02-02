@@ -646,7 +646,7 @@ YY_DECL
 
 #line 17 "MiniLisp.l"
 
-
+	int DEBUG = 0;
 
 	
 #line 653 "lex.yy.c"
@@ -871,12 +871,12 @@ YY_RULE_SETUP
 case 28:
 YY_RULE_SETUP
 #line 61 "MiniLisp.l"
-{ yylval.valor_double = atof(yytext);	if (DEBUG) printf("Flex consumiu: %f\n", yylval.valor_double); return NUMERO; }
+{ yylval.real = atof(yytext);	if (DEBUG) printf("Flex consumiu: %f\n", yylval.real); return NUMERO; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
 #line 63 "MiniLisp.l"
-{ strcpy(yylval.nome_variavel, yytext);	if (DEBUG) printf("Flex consumiu: %s\n", yylval.nome_variavel); return NOMEVAR; }
+{ strcpy(yylval.string, yytext);	if (DEBUG) printf("Flex consumiu: %s\n", yylval.string ); return NOMEVAR; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
@@ -893,7 +893,7 @@ BEGIN(INITIAL);
 case 32:
 YY_RULE_SETUP
 #line 71 "MiniLisp.l"
-{  strcpy(yylval.valor_string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.valor_string); return STRING; } 	/* limitada a 512 caracteres */
+{  strcpy(yylval.string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.string); return STRING; } 	/* limitada a 512 caracteres */
 	YY_BREAK
 case 33:
 YY_RULE_SETUP

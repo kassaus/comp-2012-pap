@@ -49,7 +49,7 @@ int yyerror( char *s )
 	
 %union {
 	double real;
-	char string[MAXSTRING];
+	char string[513];   /* não aceitava o MAXSTRING....*/
 }
 
 
@@ -63,7 +63,7 @@ int yyerror( char *s )
 %token WHEN UNLESS IF
 %token ZEROP
 %token AND OR NOT
-%token IGUAL MENOR MAIOR MENOR_IGUAL MAIOR_IGUAL
+%token IGUAL MENOR MAIOR MENOR_IGUAL MAIOR_IGUAL DIFERENTE /* falta fazer o diferente  TODO*/
 %token CONCATENATE
 %token SETQ
 %token LET
@@ -75,7 +75,7 @@ int yyerror( char *s )
 %type <string> condicao expr_condicional_booleana expr_logica_booleana
 %type <string> lista_logica_and lista_logica_or
 %type <string> expr_str lista_string lista_logica_not
-%type <string> expr_do expr_variavel
+%type <string> expr_variavel
 
 
 %%
@@ -172,7 +172,7 @@ expr_variavel: NOMEVAR expr_double		{ 	int i = verificaVariavel($1);
 ;
 
 
-
+/*
 expr_do: 	expr_double					{ if ( verificaTipo($1) ) sprintf($$, "%f", $1); else sprintf($$, "%d", (int)$1); }
 
 |	expr_do expr_double					{ if ( verificaTipo($2) ) sprintf($$, "%f", $2); else sprintf($$, "%d", (int)$2); }
@@ -182,14 +182,14 @@ expr_do: 	expr_double					{ if ( verificaTipo($1) ) sprintf($$, "%f", $1); else 
 |	expr_do expr_condicional			{ if ( verificaTipo($2) ) sprintf($$, "%f", $2); else sprintf($$, "%d", (int)$2); }
 
 ;
-
+*/
 
 
 expr_condicional:	LP IF condicao expr_then_else expr_then_else RP { if(strcmp($3, "t") == 0) $$ = $4; else $$ = $5; 	}
 																	   
-| LP WHEN condicao expr_do RP			{ if(strcmp($3, "t") == 0) sprintf($$, "%s", $4); else sprintf($$, "%s", ""); 	}  /* TODO verificar se é necessário sprintf*/
+| LP WHEN condicao expr_then_else RP			{ if(strcmp($3, "t") == 0) {$$ = $4;} } /* TODO verificar se é necessário sprintf*/
 
-| LP UNLESS condicao expr_do RP			{ if(strcmp($3, "nil") == 0) sprintf($$, "%s", $4); else sprintf($$, "%s", ""); }																   
+| LP UNLESS condicao expr_then_else RP			{ if(strcmp($3, "nil") == 0) {$$ = $4;} }																   
 ;
 
 
@@ -516,11 +516,11 @@ devolve
  */
 int verificaTipo( double num ){
 	/* converter o double para string*/
-	char numString[MAXVAR]; 
+	char numString[MAXVARS]; 
 	sprintf(numString, "%f", num);
 
 	int i;
-	for ( i=0; i<MAXVAR; i++) {
+	for ( i=0; i<MAXVARS; i++) {
 		if (numString[i]=='\0')
 			return 0;	/* chegou ao fim da string sem encontrar '.'*/	
 			
@@ -540,7 +540,8 @@ void limpaListaVariaveis (int globais){
 			for(i=0;i<MAXVARS;i++){
 				arrayVarGlobais[i].nome[0] = '\0';
 				arrayVarGlobais[i].tipo = 0;
-				arrayVarGlobais[i].valor = 0;
+				arrayVarGlobais[i].real = 0;
+				
 			}
 			if (DEBUG) printf("Lista das variaveis globais limpa");
 		}
