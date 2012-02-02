@@ -32,8 +32,9 @@ var arrayVarGlobais[MAXVARS];
 void limpaListaVariaveis (int globais);
 int verificaTipo( double num );
 void inicializaVariaveisIniciais();
-void actualizaVariavel( char nome[MAXNOME], double real, char booleano[MAXBOOL], int tipo, int index )
-int verificaVariavel( const char *name )
+void actualizaVariavel( char nome[MAXNOME], double real, char booleano[MAXBOOL], int tipo, int index );
+void adicionaVariavel( char nome[MAXNOME], double real, char booleano[MAXBOOL], int tipo );
+int verificaVariavel( const char *name );
 
 
 
@@ -96,10 +97,6 @@ expressao:	expr_double				{ if( verificaTipo($1) ) printf("%f ", $1 ); else prin
 |	expr_str						{ printf("%s ", $1 ); }
 
 |	expr_logica_booleana			{ printf("%s ", $1 ); }
-
-|	expr_when						{ printf("%s ", $1 ); }
-
-|	expr_unless						{ printf("%s ", $1 ); }
 
 |	expr_setq						/* não escreve nada, cria variavel*/
 
@@ -453,8 +450,7 @@ recebe
 	booleano valor booleano
 	tipo	0 para real, 1 para booleano	
 */
-void adicionaVariavel( char nome[MAXNOME], double real, char booleano[MAXBOOL], int tipo )
-{
+void adicionaVariavel( char nome[MAXNOME], double real, char booleano[MAXBOOL], int tipo ) {
 	strcpy(arrayVarGlobais[varsGlobaisPreenchidas].nome, nome);
 
 	if( tipo )	/*booleano*/

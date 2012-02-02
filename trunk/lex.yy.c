@@ -646,12 +646,10 @@ YY_DECL
 
 #line 17 "MiniLisp.l"
 
-	int DEBUG = 1;
+
 
 	
-
-	
-#line 655 "lex.yy.c"
+#line 653 "lex.yy.c"
 
 	if ( yy_init )
 		{
@@ -736,179 +734,179 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 23 "MiniLisp.l"
+#line 21 "MiniLisp.l"
 BEGIN(LISP);
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 24 "MiniLisp.l"
+#line 22 "MiniLisp.l"
 ECHO;
 	YY_BREAK
 
 case 3:
 YY_RULE_SETUP
-#line 28 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: +");   return '+'; }
+#line 26 "MiniLisp.l"
+{ if (DEBUG) printf("Flex consumiu: +");   return SOMA; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 29 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: -");   return '-'; }
+#line 27 "MiniLisp.l"
+{ if (DEBUG) printf("Flex consumiu: -");   return SUB; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 30 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: *");   return '*'; }
+#line 28 "MiniLisp.l"
+{ if (DEBUG) printf("Flex consumiu: *");   return MUL; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 31 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: /");   return '/'; }
+#line 29 "MiniLisp.l"
+{ if (DEBUG) printf("Flex consumiu: /");   return DIV; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 36 "MiniLisp.l"
+#line 31 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: (");   return LP; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 37 "MiniLisp.l"
+#line 32 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: )");   return RP; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 40 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: >");   return '>'; }
+#line 34 "MiniLisp.l"
+{ if (DEBUG) printf("Flex consumiu: >");   return MAIOR; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 41 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: <");   return '<'; }
+#line 35 "MiniLisp.l"
+{ if (DEBUG) printf("Flex consumiu: <");   return MENOR; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 42 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: =");   return '='; }
+#line 36 "MiniLisp.l"
+{ if (DEBUG) printf("Flex consumiu: =");   return IGUAL; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 43 "MiniLisp.l"
+#line 37 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: >=");  return MAIOR_IGUAL; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 44 "MiniLisp.l"
+#line 38 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: <=");  return MENOR_IGUAL; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 45 "MiniLisp.l"
+#line 39 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: /=");  return DIFERENTE; } 
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 47 "MiniLisp.l"
+#line 41 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: not");  return NOT; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 48 "MiniLisp.l"
+#line 42 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: or");  return OR; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 49 "MiniLisp.l"
+#line 43 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: and");  return AND; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 51 "MiniLisp.l"
+#line 45 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: if");  return IF; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 52 "MiniLisp.l"
+#line 46 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: when");   return WHEN; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 53 "MiniLisp.l"
+#line 47 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: unless");   return UNLESS; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 54 "MiniLisp.l"
+#line 48 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: zerop");   return ZEROP; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 55 "MiniLisp.l"
+#line 49 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: setq");  return SETQ; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 56 "MiniLisp.l"
+#line 51 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: let");  return LET; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 58 "MiniLisp.l"
+#line 53 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: nil");  return NIL; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 59 "MiniLisp.l"
+#line 54 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: t");  return T; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 61 "MiniLisp.l"
+#line 56 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: concatenate");  return CONCATENATE; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 63 "MiniLisp.l"
+#line 58 "MiniLisp.l"
 { if (DEBUG) printf("Flex consumiu: espaco, tab ou newline"); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 66 "MiniLisp.l"
+#line 61 "MiniLisp.l"
 { yylval.valor_double = atof(yytext);	if (DEBUG) printf("Flex consumiu: %f\n", yylval.valor_double); return NUMERO; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 68 "MiniLisp.l"
+#line 63 "MiniLisp.l"
 { strcpy(yylval.nome_variavel, yytext);	if (DEBUG) printf("Flex consumiu: %s\n", yylval.nome_variavel); return NOMEVAR; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 70 "MiniLisp.l"
+#line 65 "MiniLisp.l"
 BEGIN ( STR );	/* para apanhar as aspas no concatenate*/
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 72 "MiniLisp.l"
+#line 67 "MiniLisp.l"
 BEGIN(INITIAL); 
 	YY_BREAK
 
 
 case 32:
 YY_RULE_SETUP
-#line 76 "MiniLisp.l"
+#line 71 "MiniLisp.l"
 {  strcpy(yylval.valor_string , yytext) ; if (DEBUG) printf("Flex consumiu string: %s\n" ,yylval.valor_string); return STRING; } 	/* limitada a 512 caracteres */
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 78 "MiniLisp.l"
+#line 73 "MiniLisp.l"
 BEGIN ( LISP );
 	YY_BREAK
 
 case 34:
 YY_RULE_SETUP
-#line 81 "MiniLisp.l"
+#line 76 "MiniLisp.l"
 ECHO;
 	YY_BREAK
-#line 912 "lex.yy.c"
+#line 910 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(LISP):
 case YY_STATE_EOF(STR):
@@ -1796,4 +1794,4 @@ int main()
 	return 0;
 	}
 #endif
-#line 81 "MiniLisp.l"
+#line 76 "MiniLisp.l"
