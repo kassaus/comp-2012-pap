@@ -806,27 +806,27 @@ YY_RULE_SETUP
 case 15:
 YY_RULE_SETUP
 #line 41 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: not");  return NOT; }
+{ if (DEBUG) printf("Flex consumiu: not");  	return NOT; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 42 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: or");  return OR; }
+{ if (DEBUG) printf("Flex consumiu: or");  		return OR; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 43 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: and");  return AND; }
+{ if (DEBUG) printf("Flex consumiu: and");  	return AND; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 45 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: if");  return IF; }
+{ if (DEBUG) printf("Flex consumiu: if");  		return IF; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 46 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: when");   return WHEN; }
+{ if (DEBUG) printf("Flex consumiu: when");   	return WHEN; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
@@ -836,27 +836,27 @@ YY_RULE_SETUP
 case 21:
 YY_RULE_SETUP
 #line 48 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: zerop");   return ZEROP; }
+{ if (DEBUG) printf("Flex consumiu: zerop"); 	return ZEROP; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 49 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: setq");  return SETQ; }
+{ if (DEBUG) printf("Flex consumiu: setq");  	return SETQ; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 51 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: let");  return LET; }
+{ if (DEBUG) printf("Flex consumiu: let");  	return LET; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 53 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: nil");  return NIL; }
+{ if (DEBUG) printf("Flex consumiu: nil");  	return NIL; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 54 "MiniLisp.l"
-{ if (DEBUG) printf("Flex consumiu: t");  return T; }
+{ if (DEBUG) printf("Flex consumiu: t");  		return T; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
