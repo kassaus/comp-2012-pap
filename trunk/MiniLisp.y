@@ -82,30 +82,16 @@ int yyerror( char *s )
 %token <valor_double> NUMERO
 %token <valor_string> STRING
 %token <nome_variavel> NOMEVAR
-%token '+'    
-%token '-'
-%token '='
-%token '*'
-%token '/'
-%token '>'
-%token '<'
-%token LP 
-%token RP
-%token MAIOR_IGUAL
-%token MENOR_IGUAL
-%token DIFERENTE
-%token NOT
-%token OR
-%token AND
-%token ZEROP
-%token IF
-%token WHEN
-%token UNLESS
-%token SETQ 
-%token LET   
-%token NIL 
-%token T
+
+%token '+' '-' '*' '/' '>' '<' '='
+%token LP RP
+%token MAIOR_IGUAL MENOR_IGUAL DIFERENTE
+%token NOT OR AND ZEROP
+%token IF WHEN UNLESS
+%token SETQ LET
+%token NIL T
 %token CONCATENATE
+
 
 %type <valor_double> expr_double  lista_numeros_soma lista_numeros_sub lista_numeros_div lista_numeros_mul 
 %type <valor_boolean> expr_booleana
