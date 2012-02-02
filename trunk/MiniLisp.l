@@ -15,9 +15,7 @@
 
 
 %%
-	int DEBUG = 0;
 
-	
 
 	
 "<?ml"				BEGIN(LISP);
@@ -25,21 +23,17 @@
 
 <LISP>{
 
-"+"					{ if (DEBUG) printf("Flex consumiu: +");   return '+'; }
-"-"					{ if (DEBUG) printf("Flex consumiu: -");   return '-'; }
-"*"					{ if (DEBUG) printf("Flex consumiu: *");   return '*'; }
-"/"					{ if (DEBUG) printf("Flex consumiu: /");   return '/'; }
-
-
-
+"+"					{ if (DEBUG) printf("Flex consumiu: +");   return SOMA; }
+"-"					{ if (DEBUG) printf("Flex consumiu: -");   return SUB; }
+"*"					{ if (DEBUG) printf("Flex consumiu: *");   return MUL; }
+"/"					{ if (DEBUG) printf("Flex consumiu: /");   return DIV; }
 
 "("					{ if (DEBUG) printf("Flex consumiu: (");   return LP; }
 ")"					{ if (DEBUG) printf("Flex consumiu: )");   return RP; }
 
-
-">"					{ if (DEBUG) printf("Flex consumiu: >");   return '>'; }
-"<"					{ if (DEBUG) printf("Flex consumiu: <");   return '<'; }
-"="					{ if (DEBUG) printf("Flex consumiu: =");   return '='; }
+">"					{ if (DEBUG) printf("Flex consumiu: >");   return MAIOR; }
+"<"					{ if (DEBUG) printf("Flex consumiu: <");   return MENOR; }
+"="					{ if (DEBUG) printf("Flex consumiu: =");   return IGUAL; }
 ">="				{ if (DEBUG) printf("Flex consumiu: >=");  return MAIOR_IGUAL; }
 "<="				{ if (DEBUG) printf("Flex consumiu: <=");  return MENOR_IGUAL; }
 "/="				{ if (DEBUG) printf("Flex consumiu: /=");  return DIFERENTE; } 
@@ -53,6 +47,7 @@
 "unless"			{ if (DEBUG) printf("Flex consumiu: unless");   return UNLESS; }
 "zerop"				{ if (DEBUG) printf("Flex consumiu: zerop");   return ZEROP; }
 "setq"				{ if (DEBUG) printf("Flex consumiu: setq");  return SETQ; }
+
 "let"				{ if (DEBUG) printf("Flex consumiu: let");  return LET; }
 
 "nil"				{ if (DEBUG) printf("Flex consumiu: nil");  return NIL; }
