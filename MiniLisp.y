@@ -59,6 +59,8 @@ struct s_vars {
 */
 extern int yylex( void );
 
+extern FILE *yyin;
+
 
 int yyerror( char *s )
 {
@@ -77,21 +79,35 @@ int yyerror( char *s )
 
 
 
-
 %token <valor_double> NUMERO
 %token <valor_string> STRING
 %token <nome_variavel> NOMEVAR
-
-%token '+' '-' '*' '/' '>' '<' '='
-%token LP RP
-%token MAIOR_IGUAL MENOR_IGUAL DIFERENTE
-%token NOT OR AND ZEROP
-%token IF WHEN UNLESS
-%token SETQ LET
-%token NIL T
+%token '+'    
+%token '-'
+%token '='
+%token '*'
+%token '/'
+%token '>'
+%token '<'
+%token LP 
+%token RP
+%token MAIOR_IGUAL
+%token MENOR_IGUAL
+%token DIFERENTE
+%token NOT
+%token OR
+%token AND
+%token ZEROP
+%token IF
+%token WHEN
+%token UNLESS
+%token SETQ 
+%token LET   
+%token NIL 
+%token T
 %token CONCATENATE
 
-%type <valor_double> expr_double lista_numeros 
+%type <valor_double> expr_double  lista_numeros_soma lista_numeros_sub lista_numeros_div lista_numeros_mul 
 %type <valor_boolean> expr_booleana
 %type <valor_string> expr_str expr_condicional expr_atribuicao expr_concatenate expressao
 
@@ -103,7 +119,11 @@ int yyerror( char *s )
 
 /***************** terminado*/
 input:	/* vazio */		{	if (DEBUG) puts("Bison consumiu: input de (vazio)\n"); }
+
 |	input expressao		{	if (DEBUG) printf("Bison consumiu: input de input expressao\n"); }
+
+
+
 
 
 ;
@@ -134,16 +154,40 @@ expr_num:	NUMERO			{ $$ = $1;						if (DEBUG) printf("Bison consumiu: expr_num d
 /***************** terminado*/
 expr_double:	NUMERO			{ $$ = $1;						if (DEBUG) printf("Bison consumiu: expr_double de %f\n", $1);  }
 |	NOMEVAR						{ $$ = leValorVariavel($1);		if (DEBUG) printf("Bison consumiu: expr_double de %f\n", $$);  }
-|	LP '+' lista_numeros RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
-|	LP '-' lista_numeros RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
-|	LP '*' lista_numeros RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
-|	LP '/' lista_numeros RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
+|	LP '+' lista_numeros_soma RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
+|	LP '-' lista_numeros_sub RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
+|	LP '*' lista_numeros_mul RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
+|	LP '/' lista_numeros_div RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
 ;
 
-/***************** terminado*/
+/***************** terminado provavel que não sirva para nada 
 lista_numeros: 	expr_double		{ $$ = $1;			if (DEBUG) printf("Bison consumiu: expr_double de %f\n", $1);  }
-|	lista_numeros expr_double	{ $$ = $1 + $2;		if (DEBUG) printf("Bison consumiu: lista numeros %f e expr_double de %f\n", $1, $2 );  }
+|	lista_numeros_soma expr_double	{ $$ = $1 + $2;		if (DEBUG) printf("Bison consumiu: lista numeros %f e expr_double de %f\n", $1, $2 );  }
+|	lista_numeros_sub expr_double	{ $$ = $1 - $2;		if (DEBUG) printf("Bison consumiu: lista numeros %f e expr_double de %f\n", $1, $2 );  }
+|	lista_numeros_div expr_double	{ $$ = $1 / $2;		if (DEBUG) printf("Bison consumiu: lista numeros %f e expr_double de %f\n", $1, $2 );  }
+|	lista_numeros_mul expr_double	{ $$ = $1 * $2;		if (DEBUG) printf("Bison consumiu: lista numeros %f e expr_double de %f\n", $1, $2 );  }
+
 ;
+*/
+
+
+
+lista_numeros_soma : expr_double		{ $$ = $1; }
+|	lista_numeros_soma expr_double	{ $$ = $1 + $2; }
+;
+
+lista_numeros_sub : expr_double		{ $$ = $1; }
+|	lista_numeros_sub expr_double	{ $$ = $1 - $2; }
+;
+
+lista_numeros_div : expr_double		{ $$ = $1; }
+|	lista_numeros_div expr_double	{ $$ = $1 / $2; }
+;
+
+lista_numeros_mul : expr_double		{ $$ = $1; }
+|	lista_numeros_mul expr_double	{ $$ = $1 * $2; }
+;
+
 
 
 /***********terminada*/
@@ -221,13 +265,23 @@ cond_res:	expr_double				{ strcpy($$, ftoa_simple($1)); 		if (DEBUG) printf("Bis
 
 %%
 
-int main( void ){
+int main( int argc, char *argv[] ){
 
 	inicializaVariaveisIniciais();
 
 	if (DEBUG) ShowCurrentVars();
 	
-	return yyparse();
+	if (argc == 2)
+	{
+		yyin = fopen(argv[1], "r");
+		yyparse();
+	}
+	else
+		printf("Erro: ./MiniLisp <inputFile>\n");
+	fclose(yyin);
+	return 0;
+	
+
 }
 
 
