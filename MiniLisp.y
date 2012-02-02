@@ -1,58 +1,65 @@
 %{
 #include <stdio.h>
-#include <stdlib.h>	
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <time.h>
-#include <sys/time.h>
+#include <malloc.h>
 
-#define NUM_VARGLOB_MAX 100 	/* 100 variáveis globais possíveis */
-#define NUM_VARTEMP_MAX 100 	/* 100 variáveis temporárias possíveis, para o LET */
 
+#define MAXVARS 100
+
+int DEBUG = 1;
+int varsGlobaisPreenchidas = 0;	
+
+void inicializaVariaveisIniciais();
+char * leBooleanVariavel(char *nome);
+double leValorVariavel(char *nome);
+void gravaVariavel(char *nome, double valor, int tipo);
+int procuraVariavel(char *nome);
+void inicializaVariaveisIniciais();
+void limpaListaVariaveis (int globais)
+
+
+
+
+
+
+
+/*TODO... PROVAVELMENTE APAGAR/*
+/* ver e altrerar se necessário */
+void ShowCurrentVars();
+/* char* itoa_simple(int n); */
+char* ftoa_simple(double n);
+
+
+
+
+
+struct s_vars {
+	char nome[32+1];
+	int tipo;			/* 0 para booleano, 1 para numero */
+	double valor;		/* valor para numero, 0 para boolean nil, 1 para boolean t */
+} vars[MAXVARS];
+
+
+
+/* A funcao yyparse() gerada pelo bison vai automaticamente chamar a funcao
+   yylex() do flex.
+   A funcao yyparse() esta' definida no ficheiro ".tab.c" gerada por este
+   ficheiro ".y" e a yylex() no ficheiro "lex.yy.c" gerada pelo ficheiro ".l".
+
+   Como ambos os ficheiros sao compilados de forma independente para so'
+   depois serem ligados (linked), o ficheiro ".y" precisa de ter definida a
+   funcao yylex() para nao dar erro de compilacao.
+   Infelizmente precisamos que o bison corra antes do flex (para gerar o
+   ficheiro ".tab.h" com os %tokens e algumas outras definicoes). Entao
+   declaramos essa funcao do flex como sendo "definida noutro ficheiro fonte",
+   ou seja, "externa":
+*/
 extern int yylex( void );
 
 
-extern FILE *yyin;
-
-
-
-
-/* estrutura para guardarmos as variaveis; têm nome, tipo e valor */
-typedef struct {
-	char nome[32+1];
-	int tipo; 		/* convençao: 0 para double, 1 para boolean */
-	union {
-		char boolean[3+1];	/* t ou nil*/
-		double real;
-	}
-} variavel;
-
-
-/* array das variáveis globais*/
-variavel varsGlob[NUM_VARGLOB_MAX];
-
-
-/* array para variáveis temporárias... não sei se será a melhor opção TODO*/
-variavel varsTemp[NUM_VARTEMP_MAX];
-
-
-/* contadores para sabermos onde estamos no array, como não há o conceito de apagar, vai funcionar*/
-int varsGlobPreenchidas = 0;
-int varsTempPreenchidas = 0;
-
-
-int le_var( const char *nome );
-int escreve_var( variavel v );
-int encontra_var( const char *nome, int adicionar );
-int inicializa_variaveis_iniciais();
-
-
-
-/* Finalmente, se o bison receber alguma combinacao de tokens para a qual nao
-   ha' nenhuma regra, chama uma funcao yyerror() que devemos criar.
-   A macro YYERROR_VERBOSE, se definida, pede ao bison para ser mais detalhado
-   no erro que nos da', mas nao funciona bem em versoes antigas do bison.
-*/
-/* #define YYERROR_VERBOSE */
 int yyerror( char *s )
 {
 	fprintf( stderr, "Erro bison: %s\n", s );
@@ -61,357 +68,340 @@ int yyerror( char *s )
 
 %}
 
-
-
-
-%union{
-	int inteiro;
-	double real;
-	char nome[32+1];
-	char string[512];
-}
-
+%union	{
+		double		valor_double;
+		char		valor_boolean[3+1];
+		char		valor_string[512+1]; 
+		char		nome_variavel[32+1]; 
+		
+		
+		char		fn_nome[4+1];	/* provavel que não sirva para nada TODO*/
+		
+		/* int			union_type; */
+		}
+		
 /* Os tokens sao uma enumeracao (enum do C) que cria automaticamente valores
    inteiros para cada um. Temos no entanto que os definir como "%token" no
    ficheiro ".y" do bison:
 */
 
 
-%token <inteiro> 	NUM_INT
-%token <real>    	NUM_DOUBLE
-%token <string>		STRING
-%token <nome>		VARIAVEL
+%token <valor_double> NUMERO
+%token <valor_string> STRING
+%token <nome_variavel> NOMEVAR
 
+%token '+' '-' '*' '/' '>' '<' '='
+%token LP RP
+%token MAIOR_IGUAL MENOR_IGUAL DIFERENTE
+%token NOT OR AND ZEROP
+%token IF WHEN UNLESS
+%token SETQ LET
+%token NIL T
+%token CONCATENATE
 
-%token CONCAT
-
-%token AND
-%token OR
-%token NOT
-
-%token IF
-%token COND
-%token WHEN
-%token UNLESS
-
-%token ZEROP
-
-%token SETQ
-%token LET
-
-%token NIL
-%token T
-
-%token OP_SOMA
-%token OP_SUB
-%token OP_MULT
-%token OP_DIV
-
-%token OP_IGUAL
-%token OP_DIFERENTE	/*ainda não feito, fazer TODO*/
-%token OP_MENOR_IGUAL
-%token OP_MAIOR_IGUAL
-%token OP_MENOR
-%token OP_MAIOR
-
-%token LPAR
-%token RPAR
-
-
-%type <inteiro>  expressaoInteiros
-%type <real> 	 expressaoReais
-%type <string> 	 expressaoString
-
-%type <inteiro>  listaSomaInteiros
-%type <real> 	 listaSomaReais
-%type <inteiro>  listaSubInteiros
-%type <real> 	 listaSubReais
-%type <inteiro>  listaMultInteiros
-%type <real> 	 listaMultReais
-%type <inteiro>  listaDivInteiros
-%type <real> 	 listaDivReais
-%type <string> 	 listaString
-
-%type <inteiro>  exprCondicionalInteiros
-%type <real> 	 exprCondicionalReais
-%type <string>   condicao
-%type <inteiro>  thenElseInteiros
-%type <real> 	 thenElseReais
-
-
-/* nao sei se necessario...*/
-%type <string>   expr_zerop
-
-
-%%
-
-
-
-input:	/* vazio */
-|	input linha
-;
-
-linha:  	expressaoInteiros							{ printf("%d\n", $1 ); }
-|	expressaoReais							{ printf("%f\n", $1 ); }
-|	exprCondicionalInteiros							{ printf("%d\n", $1 ); }
-|	exprCondicionalReais							{ printf("%f\n", $1 ); }
-|	expr_zerop							{ printf("%s\n", $1 ); } 
-|	expressaoString							{ printf("%s\n", $1 ) }; 
-
-;
-
-exprCondicionalInteiros: LPAR IF condicao thenElseInteiros thenElseInteiros RPAR { if(strcmp($3, "t") == 0) $$ = $4; else $$ = $5; }
-;
-
-exprCondicionalReais: LPAR IF condicao thenElseReais thenElseReais RPAR { if(strcmp($3, "t") == 0) $$ = $4; else $$ = $5; }
-;
-
-condicao:	LPAR OP_IGUAL 		  expressaoInteiros expressaoInteiros RPAR	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR		  expressaoInteiros expressaoInteiros RPAR	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MAIOR		  expressaoInteiros expressaoInteiros RPAR	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR_IGUAL 	  expressaoInteiros expressaoInteiros RPAR	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MAIOR_IGUAL 	  expressaoInteiros expressaoInteiros RPAR	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_IGUAL		  expressaoReais expressaoReais RPAR 	{ if($3 == $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR		  expressaoReais expressaoReais RPAR 	{ if($3 < $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MAIOR	 	  expressaoReais expressaoReais RPAR 	{ if($3 > $4)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR_IGUAL	  expressaoReais expressaoReais RPAR 	{ if($3 <= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MAIOR_IGUAL	  expressaoReais expressaoReais RPAR 	{ if($3 >= $4) strcpy($$,"t"); else strcpy($$,"nil"); }
-/* Comparação de Strings */
-|		LPAR OP_IGUAL	          STRING   STRING   RPAR { if(strcmp($3, $4) == 0) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR		  STRING   STRING   RPAR { if(strcmp($3, $4) < 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MAIOR		  STRING   STRING   RPAR { if(strcmp($3, $4) > 0)  strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MENOR_IGUAL	  STRING   STRING   RPAR { if(strcmp($3, $4) <= 0) strcpy($$,"t"); else strcpy($$,"nil"); }
-|		LPAR OP_MAIOR_IGUAL	  STRING   STRING   RPAR { if(strcmp($3, $4) >= 0) strcpy($$,"t"); else strcpy($$,"nil"); }
-/* Comparação Boolean */
-		
-;
-
-
-expr_zerop:	LPAR ZEROP expressaoInteiros RPAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
-|		LPAR ZEROP expressaoReais RPAR { if($3==0) strcpy($$,"t"); else strcpy($$,"nil");   }
-;
-
-thenElseInteiros:	expressaoInteiros		{ $$ = $1; }
-|		exprCondicionalInteiros		{ $$ = $1; }
-;
-
-thenElseReais: 	expressaoReais		{ $$ = $1; }
-|		exprCondicionalReais		{ $$ = $1; }
-;
-
-expressaoInteiros:	NUM_INT		{ $$ = $1; }
-|		LPAR	OP_SOMA 	listaSomaInteiros 	RPAR	{ $$ = $3; }
-|		LPAR 	OP_SUB 		listaSubInteiros 	RPAR 	{ $$ = $3; }
-|		LPAR	OP_MULT		listaMultInteiros 	RPAR 	{ $$ = $3; }
-|		LPAR 	OP_DIV		listaDivInteiros 	RPAR	{ $$ = $3; }
-;
-
-expressaoReais:	NUM_DOUBLE	{ $$ = $1; }
-|		LPAR	OP_SOMA 	listaSomaReais 	RPAR	{ $$ = $3; }
-|		LPAR 	OP_SUB 		listaSubReais 	RPAR 	{ $$ = $3; }
-|		LPAR	OP_MULT 	listaMultReais 	RPAR 	{ $$ = $3; }
-|		LPAR 	OP_DIV		listaDivReais 	RPAR	{ $$ = $3; }
-;
-
-expressaoString: 	LPAR		CONCAT		listaString 	RPAR	{ strcpy($$, $3); }
-;
-
-listaSomaInteiros: 		expressaoInteiros	{ $$ = $1; }
-|			listaSomaInteiros 	expressaoInteiros	{ $$ = $1 + $2; }
-;
-
-listaSomaReais: 		expressaoReais	{ $$ = $1; }
-|			listaSomaReais 	expressaoReais	{ $$ = $1 + $2; }
-;
-
-listaSubInteiros: 		expressaoInteiros	{ $$ = $1; }
-|	  		listaSubInteiros 	expressaoInteiros	{ $$ = $1 - $2; }
-;
-
-listaSubReais: 		expressaoReais	{ $$ = $1; }
-|			listaSubReais 	expressaoReais	{ $$ = $1 - $2; }
-;
-
-listaMultInteiros: 		expressaoInteiros	{ $$ = $1; }
-|			listaMultInteiros 	expressaoInteiros	{ $$ = $1 * $2; }
-;
-
-listaMultReais: 		expressaoReais	{ $$ = $1; }
-|			listaMultReais 	expressaoReais	{ $$ = $1 * $2; }
-;
-
-listaDivInteiros: 		expressaoInteiros	{ $$ = $1; }
-|			listaDivInteiros 	expressaoInteiros	{ $$ = $1 / $2; }
-;
-
-listaDivReais: 		expressaoReais	{ $$ = $1; }
-|			listaDivReais 	expressaoReais	{ $$ = $1 / $2; }
-;
-
-listaString: 	STRING				{ strcpy($$, $1);}
-|		listaString STRING              { strcpy($$,$1); strcat($$, $2);}
-;
+%type <valor_string> expr_str  expr_condicional  expr_atribuicao 
+%type <valor_double> expr_double 
+%type <valor_boolean> expr_booleana
 
 
 
 %%
 
 
-int main( int argc, char *argv[] )
-{
-	if(inicializa_variaveis_iniciais()==1){
-		if (argc == 2)
-		{
-			yyin = fopen(argv[1], "r");
-			yyparse();
-		}
-		else{
-			printf("Args err: execute-> ./rpn <inputFile>\n");
-			fclose(yyin);
-			
-		}
-		int index = le_var("hour");
-		if (index >= 0)
-		{
-		   if(varsGlob[index].tipo == 0){
-				printf("Variavel %s com o valor = %f",varsGlob[index].nome,varsGlob[index].real);
-		   }
-		    else 
-                   {
- 				printf("Variavel %s com o valor = %s",varsGlob[index].nome,varsGlob[index].boolean);
-		    }	
-		}
-
-	} 
-	else 
-	{
-		printf("TEste Falhado\n");
-		
-	}
+/***************** terminado*/
+input:	/* vazio */		{	if (DEBUG) puts("Bison consumiu: input de (vazio)\n"); }
+|	input expressao		{	if (DEBUG) printf("Bison consumiu: input de input expressao\n"); }
+;
 
 
 
-	return 0;
-}
-
-
-int le_var( const char *nome )
-{
-	int i;
-	i = encontra_var( nome, 0 );
-	if( i < 0 )
-		{
-		fprintf( stderr, "Referencia a variavel inexistente: %s\n", nome );
-		exit( 1 );
-		}
-	return i;
-}
+/* em andamento */
+expressao: 	 expr_atribuicao 	{										if (DEBUG) printf("Bison consumiu: expressao de var declaration: %s\n", $1 ); }
+|	 expr_double 	{ printf("%f", $1);						if (DEBUG) printf("Bison consumiu: expressao de %f ;\n", $1 ); }
+|	 expr_condicional 		{ printf("%s", $1);						if (DEBUG) printf("Bison consumiu: expressao de condition result: %s\n", $1 ); }
+|	 expr_concatenate  			{ printf("%s", $1);						if (DEBUG) printf("Bison consumiu: expressao de \"%s\" ;\n", $1 ); }
 
 
 
 
-int escreve_var(variavel v )
-{
-	int i;
-
-	i = encontra_var( v.nome, 1 );
-	if( i < 0 )
-		{
-		fprintf( stderr, "Nao foi possivel criar a variavel: %s\n", v.nome );
-		exit( 1 );
-		}
-	if(v.tipo==0){
-		varsGlob[i].real = v.real;
-		varsGlob[i].tipo = v.tipo;
-		return 1;
-	} else {
-		strcpy(varsGlob[i].boolean,v.boolean);
-		varsGlob[i].tipo = v.tipo;
-		return 1;
-	}
-	return -1;
-}
+;
 
 
-int encontra_var( const char *nome, int adicionar  )
-{
-	int i;
+/********  já não deve servir, apagar depois
+expr_num:	NUMERO			{ $$ = $1;						if (DEBUG) printf("Bison consumiu: expr_num de %f\n", $$);  }
+|	'+' expr_num			{ $$ = $2;						if (DEBUG) printf("Bison consumiu: expr_num (+)de %f\n", $$); }
+|	'-' expr_num			{ $$ = -$2;						if (DEBUG) printf("Bison consumiu: expr_num (-)de %f\n", $$); }
+|	NOMEVAR					{ $$ = leValorVariavel($1);			if (DEBUG) printf("Bison consumiu: expr_num (nome_variavel) de %f\n", $$);  }
+;
+************/
 
-	for( i=0;  i < varsGlobPreenchidas;  i++ )
-		{
-		if( strcmp(varsGlob[i].nome, nome) == 0 )
-			return i;
-		}
-	if( adicionar  &&  i < 100 )
-		{
-		strcpy( varsGlob[i].nome, nome );
-		varsGlobPreenchidas++;
-		return i;
-		}
-	return -1;
-}
+
+/***************** terminado*/
+expr_double:	NUMERO			{ $$ = $1;						if (DEBUG) printf("Bison consumiu: expr_double de %f\n", $1);  }
+|	NOMEVAR						{ $$ = leValorVariavel($1);		if (DEBUG) printf("Bison consumiu: expr_double de %f\n", $$);  }
+|	LP '+' lista_numeros RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
+|	LP '-' lista_numeros RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
+|	LP '*' lista_numeros RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
+|	LP '/' lista_numeros RP 	{ $$ = $3;						if (DEBUG) printf("Bison consumiu: lista_numeros de %f\n", $3); }
+;
+
+/***************** terminado*/
+lista_numeros: 	expr_double		{ $$ = $1;			if (DEBUG) printf("Bison consumiu: expr_double de %f\n", $1);  }
+|	lista_numeros expr_double	{ $$ = $1 + $2;		if (DEBUG) printf("Bison consumiu: lista numeros %f e expr_double de %f\n", $1, $2 );  }
+;
+
+
+/***********terminada*/
+expr_concatenate: LP CONCATENATE expr_str RP	{ strcpy($$, $3); if (DEBUG) printf("Bison consumiu: expr_concatenate de %s\n", $1); }
+;
+
+/***********terminada*/
+expr_str:	STRING	{ strcpy($$, $1);			if (DEBUG) printf("Bison consumiu: expr_str de %s\n", $1); }
+|	expr_str STRING	{ strcpy($$, $1); strcat($$, $2);			if (DEBUG) printf("Bison consumiu: expr_str de %s e de %s\n", $1, $2); }
+
+;
 
 
 
+/***************** terminado*/
+expr_atribuicao:	LP SETQ NOMEVAR expr_double RP	{ strcpy($$, $1); gravaVariavel($3, $4, 1);		if (DEBUG) ; }
+|	LP SETQ NOMEVAR expr_booleana RP	{ strcpy($$, $1); gravaVariavel($3, $4, 0);					if (DEBUG) ; }
 
-  int inicializa_variaveis_iniciais()
-  {
 
-	  time_t now;
-    	  struct tm* tm;
-    	  now = time(0);
-    	  tm = localtime(&now);	
-	  int hour = tm->tm_hour;
-	  
-	  printf("hora: %d \n", hour);
-	  
-/*	  
-	 
-	 // variavel Hora, Minutos, Segundos, Dia, Mes, Ano;
+			/******TODO*********/
+|	LP SETQ NOMEVAR expr_double RP	{ strcpy($$, $1); 					if (DEBUG) ; }
+|	LP LET NOMEVAR expr_booleana RP	{ strcpy($$, $1); 				if (DEBUG) ; }
 
-	//Hora
-	  strcpy (Hora.nome,"hour");
-	  Hora.tipo= 0;
-	  Hora.real = tm->tm_hour; 
+;
 
-	//Minutos
-	  strcpy (Minutos.nome,"minute");
-          Minutos.tipo= 0;
-          Minutos.real = tm->tm_min;	
-	
-	//Segundos
-	  strcpy (Segundos.nome,"second");
-          Segundos.tipo= 0;
-          Segundos.real = tm->tm_sec;
-	
-	//Dia
-	  strcpy (Dia.nome,"day");
-          Dia.tipo= 0;
-          Dia.real = tm->tm_mday;	
-	
-	//Mes
-	  strcpy (Mes.nome,"month");
-          Mes.tipo= 0;
-          Mes.real = tm->tm_mon;
-	
-	//Ano
-	 strcpy (Ano.nome,"year");
-         Ano.tipo= 0;
-         Ano.real = tm->tm_year;
 
- if(escreve_var(Hora) 	 != 1) return -1;
- if(escreve_var(Minutos)  != 1) return -1;
- if(escreve_var(Segundos) != 1) return -1;
- if(escreve_var(Dia) 	 != 1) return -1;
- if(escreve_var(Mes) 	 != 1) return -1;
- if(escreve_var(Ano) 	 != 1) return -1;
- 
- 
+
+
+
+expr_condicional:	LP IF expr_booleana expressao expressao RP	{ if(strcmp($3, "t")==0) $$ = $4; else $$ = $5; if (DEBUG) printf("Bison consumiu: expr_condicional if, %s\n", $3); }
+
+|	LP WHEN expr_booleana expressao  RP	{ if(strcmp($3, "t")==0) $$ = $4;  if (DEBUG) printf("Bison consumiu: expr_condicional when, %s\n", $3); }
+
+|	LP UNLESS expr_booleana expressao  RP	{ if(strcmp($3, "nil")==0) $$ = $4; else $$ = $5; if (DEBUG) printf("Bison consumiu: expr_condicional unless, %s\n", $3); }
+
+;
+
+/* mudar alguma coisa, o expr double da primeira linha*/
+expr_booleana:	T	{ strcpy($$, "t");				if (DEBUG) printf("Bison consumiu: expr_booleana %s\n", $$); }
+| 	NIL				{ strcpy($$, "nil");							if (DEBUG) printf("Bison consumiu: expr_booleana %s\n", $$); }
+|	LP T RP			{ strcpy($$, "t");						if (DEBUG) printf("Bison consumiu: expr_booleana %s\n", $$); }
+| 	LP NIL RP		{ strcpy($$, "nil");							if (DEBUG) printf("Bison consumiu: expr_booleana %s\n", $$); }
+|	NUMERO			{ if ($1) strcpy($$, "t"); else strcpy($$, "nil ");	if (DEBUG) printf("Bison consumiu numero como booleano %s\n", $$); }
+|	NOMEVAR			{ if ( strcmp( leBooleanVariavel($1), "t"  ) strcpy($$, "t"); else strcpy($$, "nil ");	if (DEBUG) printf("Bison consumiu variavel como booleano %s\n", $$); }
+|	LP NUMERO RP			{ if ($1) strcpy($$, "t"); else strcpy($$, "nil ");	if (DEBUG) printf("Bison consumiu numero como booleano %s\n", $$); }
+|	LP NOMEVAR RP			{ if ( strcmp( leBooleanVariavel($1), "t"  ) strcpy($$, "t"); else strcpy($$, "nil ");	if (DEBUG) printf("Bison consumiu variavel como booleano %s\n", $$); }
+
+
+
+|	LP '>' expr_double expr_double RP		{ if($3 > $4) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana > %s\n", $$); }
+|	LP '<' expr_double expr_double RP		{ if($3 < $4) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana < %s\n", $$); }
+|	LP '=' expr_double expr_double RP		{ if($3 == $4) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana = %s\n", $$); }
+|	LP MAIOR_IGUAL expr_double expr_double RP	{ if($3 >= $4) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana <= %s\n", $$); }
+|	LP MENOR_IGUAL expr_double expr_double RP	{ if($3 <= $4) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana <= %s\n", $$); }
+|	LP DIFERENTE expr_double expr_double RP		{ if($3 != $4) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana /= %s\n", $$); }
+
+|	LP AND expr_booleana expr_booleana RP		{ if ( (strcmp($3, "t")==0) && (strcmp($4,"t")==0) ) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana and %s\n", $$); }
+
+|	LP OR expr_booleana expr_booleana RP		{ if ( (strcmp($3, "t")==0) || (strcmp($4,"t")==0) ) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana or %s\n", $$); }
+
+|	LP ZEROP expr_double RP 					{ if ($3==0) strcpy($$, "t"); else strcpy($$, "nil"); if (DEBUG) printf("Bison consumiu: expr_booleana zerop %s\n", $$); }
+
+;
+
+
+/* acho que não serve para nada TODO apagar
+cond_res:	expr_double				{ strcpy($$, ftoa_simple($1)); 		if (DEBUG) printf("Bison consumiu: cond_res de \"%s\"\n", $$); }
+|			expr_condicional					{ strcpy($$, $1);					if (DEBUG) printf("Bison consumiu: cond_res de \"%s\"\n", $1); }
+;
 */
 
- return 1;
- 
- 
+
+
+
+%%
+
+int main( void ){
+
+	inicializaVariaveisIniciais();
+
+	if (DEBUG) ShowCurrentVars();
+	
+	return yyparse();
 }
 
 
+void limpaListaVariaveis (int globais){
+
+		if (globais==1){	/* limpa a lista das variaveis globais */
+		
+			for(i=0;i<100;i++){
+				vars[i].nome[0] = '\0';
+				vars[i].tipo = 0;
+				vars[i].valor = 0
+			}
+			if (DEBUG) printf("Lista das variaveis globais limpa");
+		}
+}
+
+
+void inicializaVariaveisIniciais() {
+
+	/* obtém hora do sistema*/
+	time_t sec = time(&sec);
+	struct tm t = *localtime(const &sec);
+	
+	/* limpa a lista das variaveis globais*/
+	limpaListaVariaveis(1);
+	
+	/* adiciona as variáveis iniciais*/
+	gravaVariavel("year", 1900 + t.tm_year);
+	gravaVariavel("month", 1 + t.tm_mon);
+	gravaVariavel("day", t.tm_mday);
+	gravaVariavel("hour", t.tm_hour);
+	gravaVariavel("minute", t.tm_min);
+	gravaVariavel("second", t.tm_sec);
+}
+
+
+/*
+procura variavel e retorna o index onde existe, senão -1
+*/
+int procuraVariavel(char *nome){
+		int i;
+		for(i=0;i<100;i++){
+			if (stricmp(vars[i].nome, nome) == 0){	/*comparacao case insensitive*/
+				return i;
+				if (DEBUG) printf("Variavel %s encontrada na posicao %d\n", nome, i);
+			}
+		}
+		return -1;
+		if (DEBUG) printf("Variavel %s nao encontrada\n", nome);
+}
+
+
+
+/* Função que adiciona ou actualiza uma variável à pilha de variáveis */
+void gravaVariavel(char *nome, double valor, int tipo) {
+	int i;
+
+	if (varsGlobaisPreenchidas >= MAXVARS){
+		printf("Erro: Não é possível alocar mais memória\n");
+		exit (-1);
+		
+	} else {
+		i = procuraVariavel(nome);
+		
+		if (i==-1){	/*ainda não existe*/
+			i=varsGlobaisPreenchidas;
+			varsGlobaisPreenchidas++;	
+			if (DEBUG) printf("Variavel vai ser adicionada, nome %s\n", nome);
+		} 
+					
+		/* já existe */
+		strcpy(vars[i].nome, nome);
+		vars[i].valor = valor;
+		vars[i].tipo = tipo;
+		
+		if (DEBUG) printf("Variavel actualizada, nome %s, valor %f, tipo %f, index %d\n", nome, valor, tipo, i);
+		
+	}
+
+	
+}
+
+/* 
+devolve o valor da variável apenas se for um numero
+em caso de ser boolean, dá erro pois há um conflito de tipos em comparações
+*/
+double leValorVariavel(char *nome) {
+	int i;
+	i = procuraVariavel(nome);
+	
+	if (i==-1)	{	/* não existe */
+		printf("Erro: Variavel não existe, nome %s\n", nome);
+		exit (-2);
+		
+	} else {		/* tipo errado */
+		if (vars[i].tipo == 0) {
+			printf("Erro: Conflito de tipos, nome %s\n", nome);
+			exit (-3);	
+		} else {	
+			return vars[i].valor;
+		}
+	}
+}
+
+
+/* 
+devolve o valor da variáviel apenas se for um booleano
+em caso de ser numero, dá erro pois há um conflito de tipos em comparações
+*/
+char * leBooleanVariavel(char *nome) {
+	int i;
+	char * bool;
+	
+	i = procuraVariavel(nome);
+	
+	if (i==-1)	{	/* não existe */
+		printf("Erro: Variavel não existe, nome %s\n", nome);
+		exit (-2);
+		
+	} else {		/* tipo errado */
+		if (vars[i].tipo == 1) {
+			printf("Erro: Conflito de tipos, nome %s\n", nome);
+			exit (-3);	
+		} else {
+			if (vars[i].valor==0){
+				return "nil";
+				if (DEBUG) printf("Vai ser retornado o valor nil à variável %s\n", nome );			
+			} else {
+				return "t";
+				if (DEBUG) printf("Vai ser retornado o valor nil à variável %s\n", nome );	
+			}
+				
+
+		}
+	}
+}
+
+
+
+
+
+/* função simplificada da função C itoa (integer to array of char) 
+char* itoa_simple(int n)
+{
+	char strNum[1023+1];
+	
+	_itoa(n, strNum, 10);
+	return strNum;
+}
+*/
+
+/* forma simplificada de converter um double num char* */
+char* ftoa_simple(double n){
+	char strNum[1023+1];
+
+	sprintf(strNum, "%f", n);
+	return strNum;
+}
+
+
+
+
+void ShowCurrentVars(){
+	int i;
+
+	printf("Conteudo actual da lista de variavies\n");
+
+	for(i=0;i<100;i++)
+		if (vars[i].nome[0] == '\0')
+			break;
+		else
+			printf("%s:\t\t%f\n", vars[i].nome, vars[i].valor);
+}
