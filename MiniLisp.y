@@ -241,9 +241,6 @@ expr_variavel: NOMEVAR expr_double		{ 	int i = verificaVariavel($1);
 
 
 
-
-
-
 expr_condicional_booleana: LP ZEROP expr_double RP { if($3 == 0) strcpy($$, "t"); else strcpy($$, "nil"); }
 ;
 
@@ -398,10 +395,14 @@ lista_string: 	STRING				{ strcpy($$, $1);}
 											exit(-1);
 										}
 
-										if(arrayVarGlobais[i].tipo == 0) 	/*numero*/
+										if(arrayVarGlobais[i].tipo == 0) {	/*numero*/
 											sprintf($$, "%f", arrayVarGlobais[i].real); 
-										else								/*booleano*/	
+											strcat($$, $2);
+										}
+										else {								/*booleano*/	
 											sprintf($$, "%s", arrayVarGlobais[i].booleano);
+											strcat($$, $2);
+										}
 
 									}
 									  
