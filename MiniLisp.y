@@ -241,6 +241,9 @@ expr_variavel: NOMEVAR expr_double		{ 	int i = verificaVariavel($1);
 
 
 
+
+
+
 expr_condicional_booleana: LP ZEROP expr_double RP { if($3 == 0) strcpy($$, "t"); else strcpy($$, "nil"); }
 ;
 
@@ -357,14 +360,6 @@ expr_then_else: expr_double				{ $$ = $1; }
 ;
 
 
-
-
-
-
-
-
-
-
 expr_str: LP CONCATENATE lista_string RP	{ strcpy($$, $3); }
 ;
 
@@ -388,22 +383,20 @@ lista_string: 	STRING				{ strcpy($$, $1);}
 									}
 									  
 								
-|	lista_string NOMEVAR			{ 	int i = verificaVariavel($2);
+|	lista_string NOMEVAR			{ 	strcpy($$, $1); int i = verificaVariavel($2);
 
 										if ( i ==-1 ) {		/* se a var não existe*/
 											printf("Variavel inexistente\n"); 
 											exit(-1);
 										}
-
-										if(arrayVarGlobais[i].tipo == 0) {	/*numero*/
-											sprintf($$, "%f", arrayVarGlobais[i].real); 
-											strcat($$, $2);
-										}
-										else {								/*booleano*/	
-											sprintf($$, "%s", arrayVarGlobais[i].booleano);
-											strcat($$, $2);
-										}
-
+                                        char temp[372];
+										
+										if(arrayVarGlobais[i].tipo == 0) 	/*numero*/
+											sprintf(temp, "%f", arrayVarGlobais[i].real); 
+										else								/*booleano*/	
+											sprintf(temp, "%s", arrayVarGlobais[i].booleano);
+										
+                                        strcat($$, temp);
 									}
 									  
 ;
