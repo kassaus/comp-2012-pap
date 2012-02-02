@@ -1,0 +1,17 @@
+<html>
+	<body>
+	
+		(+ 0 1) = <?ml (+ 0 1) ?>
+		
+		(+ 0 0) = <?ml (+ 0 0)?>
+		
+	
+		Se 1 > 2 imprimes 1 senao imprimes 0 = result: <?ml ( if( > 1 2 ) (+ 0 1) (+ 0 0)) ?>
+					
+		
+
+		
+	</body>
+	
+		
+</html>

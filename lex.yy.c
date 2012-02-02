@@ -646,7 +646,7 @@ YY_DECL
 
 #line 17 "MiniLisp.l"
 
-	int DEBUG = 0;
+	int DEBUG = 1;
 
 	
 
