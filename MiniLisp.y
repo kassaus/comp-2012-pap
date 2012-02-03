@@ -254,6 +254,7 @@ expr_logica_booleana: LP AND lista_logica_and RP 	{ strcpy($$, $3); }
 
 |	LP NOT lista_logica_not RP 						{ strcpy($$, $3); }
 
+|	condicao 									{ strcpy($$, $1); }	
 ;
 
 
